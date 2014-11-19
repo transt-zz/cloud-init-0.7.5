@@ -37,7 +37,7 @@ def add_route(route):
     if get_route() is None:
         cmd = ['chdev', '-l', 'inet0']
         cmd.append("-aroute=" + "\"net,-hopcount,0,,0," + route + "\"")
-        subp(cmd, capture=False)
+        util.subp(cmd, capture=False)
 
 # Call chdev to delete default route
 def del_route(route):
@@ -45,13 +45,13 @@ def del_route(route):
     if (route == get_route()):
         cmd = ['chdev', '-l', 'inet0']
         cmd.append("-adelroute=" + "\"net,-hopcount,0,,0," + route + "\"")
-        subp(cmd, capture=False)
+        util.subp(cmd, capture=False)
 
 # Return the default route
 def get_route():
     # First, delete the route
     cmd = ['lsattr', '-E', '-l', 'inet0', '-a', 'route', '-F', 'value']
-    (out, err) = subp(cmd)
+    (out, err) = util.subp(cmd)
     if len(out):
         return out.split(",")[5]
     else:
