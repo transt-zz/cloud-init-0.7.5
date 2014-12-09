@@ -95,6 +95,13 @@ class Distro(distros.Distro):
         util.subp(['chlang', '-m', str(locale)])
 
     def _write_hostname(self, hostname, out_fn):
+        # Permanently change the hostname for inet0 device in the ODM
+        util.subp(['chdev', '-l', 'inet0', '-a', 'hostname=' + str(hostname)])
+
+        # Change the node for the uname process
+        util.subp(['uname', '-S', str(hostname)])
+
+        # Change the hostname on the current running system
         util.subp(['hostname', str(hostname)])
 
     def _select_hostname(self, hostname, fqdn):
