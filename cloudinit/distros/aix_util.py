@@ -57,3 +57,118 @@ def get_route():
     else:
         return None
 
+# Return the device using the lsdev command output
+def find_devs_with(path=None):
+    """
+    find devices matching given criteria (via lsdev)
+    """
+    lsdev_cmd = ['lsdev']
+    options = []
+    if path:
+        options.append("-Cl")
+        options.append(path)
+    cmd = lsdev_cmd + options
+
+    (out, _err) = util.subp(cmd)
+    entries = []
+    for line in out.splitlines():
+        line = line.strip().split()[0]
+        if line:
+            entries.append(line)
+    return entries
+
+def mount_cb(device, callback, data=None, rw=False, mtype=None, sync=True):
+    """
+    Mount the device, call method 'callback' passing the directory
+    in which it was mounted, then unmount.  Return whatever 'callback'
+    returned.  If data != None, also pass data to callback.
+    """
+    mounted = mounts()
+    with util.tempdir() as tmpd:
+        umount = False
+        devname="/dev/" + device
+        if device in mounted:
+            mountpoint = mounted[device]['mountpoint']
+        elif devname in mounted:
+            mountpoint = mounted[devname]['mountpoint']
+        else:
+            try:
+                mountcmd = ['mount']
+                mountopts = []
+                if rw:
+                    mountopts.append('rw')
+                else:
+                    mountopts.append('ro')
+                if sync:
+                    # This seems like the safe approach to do
+                    # (ie where this is on by default)
+                    mountopts.append("sync")
+                if mountopts:
+                    mountcmd.extend(["-o", ",".join(mountopts)])
+                if mtype:
+                    mountcmd.extend(['-t', mtype])
+
+                if "/cd" in devname:
+                        mountcmd.append('-vcdrfs')
+                        mountcmd.append(devname)
+                else:
+                        mountcmd.append(device)
+
+                mountcmd.append(tmpd)
+                util.subp(mountcmd)
+                umount = tmpd  # This forces it to be unmounted (when set)
+                mountpoint = tmpd
+            except (IOError, OSError) as exc:
+                raise MountFailedError(("Failed mounting %s to %s due to: %s") % (device, tmpd, exc))
+        # Be nice and ensure it ends with a slash
+        if not mountpoint.endswith("/"):
+            mountpoint += "/"
+
+        with unmounter(umount):
+            if data is None:
+                ret = callback(mountpoint)
+            else:
+                ret = callback(mountpoint, data)
+            return ret
+
+def mounts():
+    mounted = {}
+    try:
+        # Go through mounts to see what is already mounted
+        (mountoutput, _err) = util.subp("mount")
+        mount_locs = mountoutput.splitlines()
+        mountre = r'\s+(/dev/[\S]+)\s+(/\S*)\s+(\S+)\s+(\S+ \d+ \d+:\d+) (\S+(,\S+)?)'
+        for mpline in mount_locs:
+            # AIX: /dev/hd4          524288    142672   73%    10402    38% /
+            try:
+                m = re.search(mountre, mpline)
+                dev = m.group(1)
+                mp = m.group(2)
+                fstype = m.group(3)
+                date = m.group(4)
+                opts = m.group(5).split(",")[0]
+            except:
+                continue
+            # If the name of the mount point contains spaces these
+            # can be escaped as '\040', so undo that..
+            mp = mp.replace("\\040", " ")
+            mounted[dev] = {
+                'fstype': fstype,
+                'mountpoint': mp,
+                'opts': opts,
+                'date': date,
+            }
+        print("Fetched %s mounts" % mounted)
+    except (IOError, OSError):
+        print("Failed fetching mount points")
+    return mounted
+
+@contextlib.contextmanager
+def unmounter(umount):
+    try:
+        yield umount
+    finally:
+        if umount:
+            umount_cmd = ["umount", umount]
+            util.subp(umount_cmd)
+
