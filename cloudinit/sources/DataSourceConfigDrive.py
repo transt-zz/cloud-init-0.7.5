@@ -23,6 +23,7 @@ import os
 from cloudinit import log as logging
 from cloudinit import sources
 from cloudinit import util
+from cloudinit.distros import aix_util
 
 from cloudinit.sources.helpers import openstack
 
@@ -35,9 +36,8 @@ DEFAULT_METADATA = {
     "instance-id": DEFAULT_IID,
 }
 VALID_DSMODES = ("local", "net", "pass", "disabled")
-FS_TYPES = ('vfat', 'iso9660')
 LABEL_TYPES = ('config-2',)
-OPTICAL_DEVICES = tuple(('/dev/sr%s' % i for i in range(0, 2)))
+OPTICAL_DEVICES = tuple(('cd%s' % i for i in range(0, 2)))
 
 
 class DataSourceConfigDrive(openstack.SourceMixin, sources.DataSource):
@@ -70,7 +70,7 @@ class DataSourceConfigDrive(openstack.SourceMixin, sources.DataSource):
         if not found:
             for dev in find_candidate_devs():
                 try:
-                    results = util.mount_cb(dev, read_config_drive)
+                    results = aix_util.mount_cb(dev, read_config_drive)
                     found = dev
                 except openstack.NonReadable:
                     pass
@@ -224,34 +224,16 @@ def find_candidate_devs(probe_optical=True):
         * labeled with 'config-2'
     """
     # query optical drive to get it in blkid cache for 2.6 kernels
+    by_fstype = []
     if probe_optical:
         for device in OPTICAL_DEVICES:
             try:
-                util.find_devs_with(path=device)
+                by_fstype.extend(aix_util.find_devs_with(device))
             except util.ProcessExecutionError:
                 pass
 
-    by_fstype = []
-    for fs_type in FS_TYPES:
-        by_fstype.extend(util.find_devs_with("TYPE=%s" % (fs_type)))
-
-    by_label = []
-    for label in LABEL_TYPES:
-        by_label.extend(util.find_devs_with("LABEL=%s" % (label)))
-
-    # give preference to "last available disk" (vdb over vda)
-    # note, this is not a perfect rendition of that.
-    by_fstype.sort(reverse=True)
-    by_label.sort(reverse=True)
-
-    # combine list of items by putting by-label items first
-    # followed by fstype items, but with dupes removed
-    candidates = (by_label + [d for d in by_fstype if d not in by_label])
-
-    # We are looking for a block device or partition with necessary label or
-    # an unpartitioned block device (ex sda, not sda1)
-    devices = [d for d in candidates
-               if d in by_label or not util.is_partition(d)]
+    # We are looking for a block device
+    devices = by_fstype
     return devices
 
 
