@@ -26,6 +26,7 @@ import os
 from cloudinit import log as logging
 from cloudinit import sources
 from cloudinit import util
+from cloudinit.distros import aix_util
 
 LOG = logging.getLogger(__name__)
 
@@ -95,22 +96,15 @@ class DataSourceNoCloud(sources.DataSource):
         label = self.ds_cfg.get('fs_label', "cidata")
         if label is not None:
             # Query optical drive to get it in blkid cache for 2.6 kernels
-            util.find_devs_with(path="/dev/sr0")
-            util.find_devs_with(path="/dev/sr1")
-
-            fslist = util.find_devs_with("TYPE=vfat")
-            fslist.extend(util.find_devs_with("TYPE=iso9660"))
-
-            label_list = util.find_devs_with("LABEL=%s" % label)
-            devlist = list(set(fslist) & set(label_list))
-            devlist.sort(reverse=True)
+            devlist = aix_util.find_devs_with("cd0")
+            devlist.extend(aix_util.find_devs_with("cd1"))
 
             for dev in devlist:
                 try:
                     LOG.debug("Attempting to use data from %s", dev)
 
                     try:
-                        seeded = util.mount_cb(dev, _pp2d_callback,
+                        seeded = aix_util.mount_cb(dev, _pp2d_callback,
                                                pp2d_kwargs)
                     except ValueError as e:
                         if dev in label_list:
