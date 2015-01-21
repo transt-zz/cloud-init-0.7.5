@@ -27,7 +27,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 %{!?python_sitelib: %global python_sitelib %(python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
-%define initsys sysvinit
+%define initsys aix
 
 %description
 Cloud-init is an init script that initializes a cloud node (VM)
@@ -103,7 +103,7 @@ rm -f %{buildroot}/etc/cloud/templates/*.suse.*
 rm -rf %{buildroot}/%{_prefix}/etc/cloud/*
 mv -f %{buildroot}/etc/cloud/* %{buildroot}/%{_prefix}/etc/cloud
 
-# move sysvinit scripts into the "right" place
+# move aix sysvinit scripts into the "right" place
 %define _initddir /etc/rc.d/init.d
 mkdir -p %{buildroot}/%{_initddir}
 mkdir -p %{buildroot}/%{_sbindir}
