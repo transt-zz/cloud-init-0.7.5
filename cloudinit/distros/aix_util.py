@@ -13,6 +13,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import re
+import contextlib
+
 from cloudinit.distros.parsers.resolv_conf import ResolvConf
 
 from cloudinit import log as logging
