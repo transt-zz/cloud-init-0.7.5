@@ -121,7 +121,7 @@ ln -sf /etc/rc.d/init.d/cloud-init-local /etc/rc.d/rc2.d/Scloud-init-local
 ln -sf /etc/rc.d/init.d/cloud-init /etc/rc.d/rc2.d/Scloud-init
 ln -sf /etc/rc.d/init.d/cloud-config /etc/rc.d/rc2.d/Scloud-config
 ln -sf /etc/rc.d/init.d/cloud-final /etc/rc.d/rc2.d/Scloud-final
-chdev -l sys0 -a clouddev=1
+chdev -l sys0 -a clouddev=1 2>&1 >/dev/null
 
 %postun
 rm /etc/rc.d/rc2.d/Scloud-init-local
