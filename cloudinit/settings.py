@@ -37,8 +37,8 @@ CFG_BUILTIN = {
         'OVF',
         #'MAAS',
         #'GCE',
-        #'OpenStack'
-        #'Ec2',
+        'OpenStack'
+        'Ec2',
         #'CloudSigma',
         #'CloudStack',
         #'SmartOS',
