@@ -38,7 +38,7 @@ def add_route(route):
 
     # Add the route if there isn't already a default route
     if get_route() is None:
-        cmd = ['chdev', '-l', 'inet0']
+        cmd = ['/usr/sbin/chdev', '-l', 'inet0']
         cmd.append("-aroute=" + "\"net,-hopcount,0,,0," + route + "\"")
         util.subp(cmd, capture=False)
 
@@ -46,14 +46,14 @@ def add_route(route):
 def del_route(route):
     # if route exists, delete it
     if (route == get_route()):
-        cmd = ['chdev', '-l', 'inet0']
+        cmd = ['/usr/sbin/chdev', '-l', 'inet0']
         cmd.append("-adelroute=" + "\"net,-hopcount,0,,0," + route + "\"")
         util.subp(cmd, capture=False)
 
 # Return the default route
 def get_route():
     # First, delete the route
-    cmd = ['lsattr', '-E', '-l', 'inet0', '-a', 'route', '-F', 'value']
+    cmd = ['/usr/sbin/lsattr', '-E', '-l', 'inet0', '-a', 'route', '-F', 'value']
     (out, err) = util.subp(cmd)
     if len(out):
         return out.split(",")[5]
@@ -65,7 +65,7 @@ def find_devs_with(path=None):
     """
     find devices matching given criteria (via lsdev)
     """
-    lsdev_cmd = ['lsdev']
+    lsdev_cmd = ['/usr/sbin/lsdev']
     options = []
     if path:
         options.append("-Cl")
@@ -96,7 +96,7 @@ def mount_cb(device, callback, data=None, rw=False, mtype=None, sync=True):
             mountpoint = mounted[devname]['mountpoint']
         else:
             try:
-                mountcmd = ['mount']
+                mountcmd = ['/usr/sbin/mount']
                 mountopts = []
                 if rw:
                     mountopts.append('rw')
@@ -138,7 +138,7 @@ def mounts():
     mounted = {}
     try:
         # Go through mounts to see what is already mounted
-        (mountoutput, _err) = util.subp("mount")
+        (mountoutput, _err) = util.subp("/usr/sbin/mount")
         mount_locs = mountoutput.splitlines()
         mountre = r'\s+(/dev/[\S]+)\s+(/\S*)\s+(\S+)\s+(\S+ \d+ \d+:\d+) (\S+(,\S+)?)'
         for mpline in mount_locs:
@@ -172,6 +172,6 @@ def unmounter(umount):
         yield umount
     finally:
         if umount:
-            umount_cmd = ["umount", umount]
+            umount_cmd = ["/usr/sbin/umount", umount]
             util.subp(umount_cmd)
 
