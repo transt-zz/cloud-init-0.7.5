@@ -57,8 +57,8 @@ class Distro(distros.Distro):
         searchservers = []
         dev_names = entries.keys()
 
-        chdev_cmd = ['chdev']
-        log_chdev_cmd = ['chdev']
+        chdev_cmd = ['/usr/sbin/chdev']
+        log_chdev_cmd = ['/usr/sbin/chdev']
         chdev_opts = {
                 "address" : '-anetaddr=',
                 "netmask" : '-anetmask=',
@@ -92,17 +92,17 @@ class Distro(distros.Distro):
         return dev_names
 
     def apply_locale(self, locale, out_fn=None):
-        util.subp(['chlang', '-m', str(locale)])
+        util.subp(['/usr/bin/chlang', '-m', str(locale)])
 
     def _write_hostname(self, hostname, out_fn):
         # Permanently change the hostname for inet0 device in the ODM
-        util.subp(['chdev', '-l', 'inet0', '-a', 'hostname=' + str(hostname)])
+        util.subp(['/usr/sbin/chdev', '-l', 'inet0', '-a', 'hostname=' + str(hostname)])
 
         # Change the node for the uname process
-        util.subp(['uname', '-S', str(hostname)])
+        util.subp(['/usr/bin/uname', '-S', str(hostname)])
 
         # Change the hostname on the current running system
-        util.subp(['hostname', str(hostname)])
+        util.subp(['/usr/bin/hostname', str(hostname)])
 
     def _select_hostname(self, hostname, fqdn):
         # Should be fqdn if we can use it
@@ -125,7 +125,7 @@ class Distro(distros.Distro):
         if device_name in 'lo':
             return True
 
-        cmd = ['chdev', '-l', translate_devname(device_name), '-a', 'state=up']
+        cmd = ['/usr/sbin/chdev', '-l', translate_devname(device_name), '-a', 'state=up']
         LOG.debug("Attempting to run bring up interface %s using command %s", device_name, cmd)
         try:
             (_out, err) = util.subp(cmd)
@@ -145,7 +145,7 @@ class Distro(distros.Distro):
         return True
 
     def set_timezone(self, tz):
-        cmd = ['chtz', tz]
+        cmd = ['/usr/bin/chtz', tz]
         util.subp(cmd)
 
     def package_command(self, command, args=None, pkgs=None):
@@ -185,8 +185,8 @@ class Distro(distros.Distro):
             LOG.info("User %s already exists, skipping.", name)
             return False
 
-        adduser_cmd = ['useradd']
-        log_adduser_cmd = ['useradd']
+        adduser_cmd = ['/usr/sbin/useradd']
+        log_adduser_cmd = ['/usr/sbin/useradd']
 
         adduser_opts = {
                 "homedir": '-d',
@@ -271,7 +271,7 @@ class Distro(distros.Distro):
             raise e
 
     def create_group(self, name, members):
-        group_add_cmd = ['mkgroup', name]
+        group_add_cmd = ['/usr/bin/mkgroup', name]
 
         # Check if group exists, and then add it doesn't
         if util.is_group(name):
