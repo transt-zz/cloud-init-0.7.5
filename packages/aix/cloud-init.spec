@@ -71,17 +71,17 @@ find %{buildroot} -name ".placeholder" -type f -exec rm -f {} \;
 for x in "%{buildroot}%{_bindir}/"*.py; do
    [ -f "${x}" ] && mv "${x}" "${x%.py}"
 done
-mkdir -p %{buildroot}%{_localstatedir}/lib/cloud
+/usr/bin/mkdir -p %{buildroot}%{_localstatedir}/lib/cloud
 
 # move documentation
-mkdir -p %{buildroot}%{_defaultdocdir}
+/usr/bin/mkdir -p %{buildroot}%{_defaultdocdir}
 %define aixshare usr/share
 
 rm -rf %{buildroot}%{docdir}
 mv -f %{buildroot}/%{aixshare}/doc/%{name} %{buildroot}%{docdir}
-mkdir -p %{buildroot}/%{_sysconfdir}/cloud/
+/usr/bin/mkdir -p %{buildroot}/%{_sysconfdir}/cloud/
 
-mkdir -p %{buildroot}/%_prefix/%_lib
+/usr/bin/mkdir -p %{buildroot}/%_prefix/%_lib
 cp -r %{buildroot}/usr/lib/cloud-init %{buildroot}/%_prefix/%_lib
 
 # copy the LICENSE
@@ -105,8 +105,8 @@ mv -f %{buildroot}/etc/cloud/* %{buildroot}/%{_prefix}/etc/cloud
 
 # move aix sysvinit scripts into the "right" place
 %define _initddir /etc/rc.d/init.d
-mkdir -p %{buildroot}/%{_initddir}
-mkdir -p %{buildroot}/%{_sbindir}
+/usr/bin/mkdir -p %{buildroot}/%{_initddir}
+/usr/bin/mkdir -p %{buildroot}/%{_sbindir}
 OLDPATH="%{buildroot}%{_initddir}"
 for iniF in *; do
     ln -sf "%{_initddir}/${iniF}" "%{buildroot}/%{_sbindir}/rc${iniF}"
@@ -114,14 +114,18 @@ done
 cd $OLDPATH
 
 # remove duplicate files
-fdupes %{buildroot}%{python_sitelib}
+/opt/freeware/bin/fdupes %{buildroot}%{python_sitelib}
 
 %post
-ln -sf /etc/rc.d/init.d/cloud-init-local /etc/rc.d/rc2.d/Scloud-init-local
-ln -sf /etc/rc.d/init.d/cloud-init /etc/rc.d/rc2.d/Scloud-init
-ln -sf /etc/rc.d/init.d/cloud-config /etc/rc.d/rc2.d/Scloud-config
-ln -sf /etc/rc.d/init.d/cloud-final /etc/rc.d/rc2.d/Scloud-final
-chdev -l sys0 -a clouddev=1 2>&1 >/dev/null
+/usr/bin/ln -sf /etc/rc.d/init.d/cloud-init-local /etc/rc.d/rc2.d/Scloud-init-local
+/usr/bin/ln -sf /etc/rc.d/init.d/cloud-init /etc/rc.d/rc2.d/Scloud-init
+/usr/bin/ln -sf /etc/rc.d/init.d/cloud-config /etc/rc.d/rc2.d/Scloud-config
+/usr/bin/ln -sf /etc/rc.d/init.d/cloud-final /etc/rc.d/rc2.d/Scloud-final
+if [[ `/usr/sbin/lsattr -El sys0 | /usr/bin/grep clouddev 2>&1 >/dev/null; echo $?` -eq 0  ]]; then
+	/usr/sbin/chdev -l sys0 -a clouddev=1 2>&1 >/dev/null
+else
+	/usr/sbin/chdev -l sys0 -a ghostdev=1 2>&1 >/dev/null
+fi
 
 %postun
 rm /etc/rc.d/rc2.d/Scloud-init-local
