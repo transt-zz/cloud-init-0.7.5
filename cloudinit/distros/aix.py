@@ -43,10 +43,10 @@ class Distro(distros.Distro):
 
     def apply_network(self, settings, bring_up=True):
         # Write it out
-        dev_names = _write_network(settings)
+        dev_names = self._write_network(settings)
         # Now try to bring them up
         if bring_up:
-            return _bring_up_interfaces(dev_names)
+            return self._bring_up_interfaces(dev_names)
         return False
 
     def _write_network(self, settings):
@@ -66,8 +66,8 @@ class Distro(distros.Distro):
 
         for (dev, info) in entries.iteritems():
             if dev not in 'lo':
-                chdev_cmd.extend(['-l', translate_devname(dev)])
-                log_chdev_cmd.extend(['-l', translate_devname(dev)])
+                chdev_cmd.extend(['-l', aix_util.translate_devname(dev)])
+                log_chdev_cmd.extend(['-l', aix_util.translate_devname(dev)])
                 for (key, val) in info.iteritems():
                     if key in chdev_opts and val and isinstance(val, basestring):
                         chdev_cmd.append(chdev_opts[key] + val)
@@ -76,7 +76,7 @@ class Distro(distros.Distro):
                 log_chdev_cmd.append("-astate=down")
 
                 try:
-                    subp(chdev_cmd, logstring=log_chdev_cmd)
+                    util.subp(chdev_cmd, logstring=log_chdev_cmd)
                 except Exception as e:
                     raise e
 
@@ -88,7 +88,7 @@ class Distro(distros.Distro):
                 searchservers.extend(info['dns-search'])
 
         if nameservers or searchservers:
-            rhel_util.update_resolve_conf_file(resolve_conf_fn, nameservers, searchservers)
+            rhel_util.update_resolve_conf_file(self.resolve_conf_fn, nameservers, searchservers)
         return dev_names
 
     def apply_locale(self, locale, out_fn=None):
@@ -115,7 +115,7 @@ class Distro(distros.Distro):
         return (host_fn, self._read_hostname(host_fn))
 
     def _read_hostname(self, filename, default=None):
-        (out, _err) = util.subp(['hostname'])
+        (out, _err) = util.subp(['/usr/bin/hostname'])
         if len(out):
             return out
         else:
@@ -125,7 +125,7 @@ class Distro(distros.Distro):
         if device_name in 'lo':
             return True
 
-        cmd = ['/usr/sbin/chdev', '-l', translate_devname(device_name), '-a', 'state=up']
+        cmd = ['/usr/sbin/chdev', '-l', aix_util.translate_devname(device_name), '-a', 'state=up']
         LOG.debug("Attempting to run bring up interface %s using command %s", device_name, cmd)
         try:
             (_out, err) = util.subp(cmd)
@@ -265,7 +265,7 @@ class Distro(distros.Distro):
             # Need to use the short option name '-l' instead of '--lock'
             # (which would be more descriptive) since SLES 11 doesn't know
             # about long names.
-            util.subp(['chuser', 'account_locked=true', name])
+            util.subp(['/usr/bin/chuser', 'account_locked=true', name])
         except Exception as e:
             util.logexc(LOG, 'Failed to disable password for user %s', name)
             raise e
@@ -290,5 +290,5 @@ class Distro(distros.Distro):
                     LOG.warn("Unable to add group member '%s' to group '%s'; user does not exist.", member, name)
                     continue
 
-                util.subp(['usermod', '-G', name, member])
+                util.subp(['/usr/sbin/usermod', '-G', name, member])
                 LOG.info("Added user '%s' to group '%s'" % (member, name))
