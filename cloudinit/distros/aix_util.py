@@ -55,6 +55,8 @@ def get_route():
     # First, delete the route
     cmd = ['/usr/sbin/lsattr', '-E', '-l', 'inet0', '-a', 'route', '-F', 'value']
     (out, err) = util.subp(cmd)
+
+    out = out.strip()
     if len(out):
         return out.split(",")[5]
     else:
