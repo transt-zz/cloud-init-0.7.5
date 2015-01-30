@@ -117,10 +117,10 @@ cd $OLDPATH
 /opt/freeware/bin/fdupes %{buildroot}%{python_sitelib}
 
 %post
-/usr/bin/ln -sf /etc/rc.d/init.d/cloud-init-local /etc/rc.d/rc2.d/Scloud-init-local
-/usr/bin/ln -sf /etc/rc.d/init.d/cloud-init /etc/rc.d/rc2.d/Scloud-init
-/usr/bin/ln -sf /etc/rc.d/init.d/cloud-config /etc/rc.d/rc2.d/Scloud-config
-/usr/bin/ln -sf /etc/rc.d/init.d/cloud-final /etc/rc.d/rc2.d/Scloud-final
+/usr/bin/ln -sf /etc/rc.d/init.d/cloud-init-local /etc/rc.d/rc2.d/S01cloud-init-local
+/usr/bin/ln -sf /etc/rc.d/init.d/cloud-init       /etc/rc.d/rc2.d/S02cloud-init
+/usr/bin/ln -sf /etc/rc.d/init.d/cloud-config     /etc/rc.d/rc2.d/S03cloud-config
+/usr/bin/ln -sf /etc/rc.d/init.d/cloud-final      /etc/rc.d/rc2.d/S04cloud-final
 if [[ `/usr/sbin/lsattr -El sys0 | /usr/bin/grep clouddev 2>&1 >/dev/null; echo $?` -eq 0  ]]; then
 	/usr/sbin/chdev -l sys0 -a clouddev=1 2>&1 >/dev/null
 else
@@ -128,10 +128,10 @@ else
 fi
 
 %postun
-rm /etc/rc.d/rc2.d/Scloud-init-local
-rm /etc/rc.d/rc2.d/Scloud-init
-rm /etc/rc.d/rc2.d/Scloud-config
-rm /etc/rc.d/rc2.d/Scloud-final
+rm /etc/rc.d/rc2.d/S01cloud-init-local
+rm /etc/rc.d/rc2.d/S02cloud-init
+rm /etc/rc.d/rc2.d/S03cloud-config
+rm /etc/rc.d/rc2.d/S04cloud-final
 
 %files
 %define py_ver 2.7
