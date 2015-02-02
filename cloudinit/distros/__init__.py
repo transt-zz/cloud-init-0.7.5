@@ -41,7 +41,7 @@ OSFAMILIES = {
     'redhat': ['fedora', 'rhel'],
     'gentoo': ['gentoo'],
     'freebsd': ['freebsd'],
-    'suse': ['sles'],
+    'suse': ['opensuse', 'sles'],
     'arch': ['arch'],
     'aix': ['aix'],
 }
@@ -79,6 +79,9 @@ class Distro(object):
             raise IOError(("Invalid timezone %s,"
                            " no file found at %s") % (tz, tz_file))
         return tz_file
+
+    def get_init_cmd(self):
+        return self.init_cmd
 
     def get_option(self, opt_name, default=None):
         return self._cfg.get(opt_name, default)
@@ -121,6 +124,7 @@ class Distro(object):
         dev_names = self._write_network(settings)
         # Now try to bring them up
         if bring_up:
+            self._bring_down_interfaces(dev_names)
             return self._bring_up_interfaces(dev_names)
         return False
 
@@ -288,6 +292,28 @@ class Distro(object):
         am_failed = 0
         for d in device_names:
             if not self._bring_up_interface(d):
+                am_failed += 1
+        if am_failed == 0:
+            return True
+        return False
+
+    def _bring_down_interface(self, device_name):
+        cmd = ['ifdown', device_name]
+        LOG.debug("Attempting to run bring down interface %s using command %s",
+                   device_name, cmd)
+        try:
+            (_out, err) = util.subp(cmd)
+            if len(err):
+                LOG.warn("Running %s resulted in stderr output: %s", cmd, err)
+            return True
+        except util.ProcessExecutionError:
+            util.logexc(LOG, "Running interface command %s failed", cmd)
+            return False
+
+    def _bring_down_interfaces(self, device_names):
+        am_failed = 0
+        for d in device_names:
+            if not self._bring_down_interface(d):
                 am_failed += 1
         if am_failed == 0:
             return True
