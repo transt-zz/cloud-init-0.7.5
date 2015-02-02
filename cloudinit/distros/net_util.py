@@ -128,6 +128,14 @@ def translate_network(settings):
             # really care about
             if proto_type in ['dhcp', 'static']:
                 iface_info['bootproto'] = proto_type
+            if iface_details[1].strip().lower() == "inet6":
+                iface_info['ipv6'] = True
+            else:
+                iface_info['ipv6'] = False
+            if iface_details[1].strip().lower() == "inet":
+                iface_info['ipv4'] = True
+            else:
+                iface_info['ipv4'] = False
         # These can just be copied over
         for k in ['netmask', 'address', 'gateway', 'broadcast']:
             if k in info:
