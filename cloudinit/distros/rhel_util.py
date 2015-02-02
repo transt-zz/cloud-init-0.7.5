@@ -21,6 +21,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
 from cloudinit.distros.parsers.resolv_conf import ResolvConf
 from cloudinit.distros.parsers.sys_conf import SysConf
 
@@ -63,8 +64,16 @@ def read_sysconfig_file(fn):
         contents = []
     return (exists, SysConf(contents))
 
+# Helper function to write the resolv.conf file, taking into account that the
+# file might be immutable before writing, and then making sure it is 
+# immutable after writing.  This is done to ensure NetworkManager cannot
+# overwrite the file
+def write_resolv_conf_file(fn, r_conf):
+    util.subp(['chattr', '-i', fn])
+    util.write_file(fn, str(r_conf), 0644)
+    util.subp(['chattr', '+i', fn])
 
-# Helper function to update RHEL/SUSE /etc/resolv.conf
+# Helper function to write RHEL/SUSE /etc/resolv.conf
 def update_resolve_conf_file(fn, dns_servers, search_servers):
     try:
         r_conf = ResolvConf(util.load_file(fn))
@@ -86,4 +95,21 @@ def update_resolve_conf_file(fn, dns_servers, search_servers):
                 r_conf.add_search_domain(s)
             except ValueError:
                 util.logexc(LOG, "Failed at adding search domain %s", s)
-    util.write_file(fn, str(r_conf), 0644)
+    write_resolv_conf_file(fn, r_conf)
+
+
+# Overwrite the existing conf file so the resolv.conf
+# is a replacement versus an update to eliminate unwanted
+# existing changes from previous capture data
+def remove_resolve_conf_file(fn):
+    r_conf = ResolvConf('')
+    r_conf.parse()
+    write_resolv_conf_file(fn, r_conf)
+
+
+# Helper function to remove ifcfg-eth* files from network script directory.
+def remove_ifcfg_files(directory):
+    files = os.listdir(directory)
+    for f in files:
+        if f.startswith("ifcfg-eth"):
+            util.del_file(os.path.join(directory, f))
