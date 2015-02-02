@@ -83,10 +83,73 @@ class Distro(distros.Distro):
         for d in device_names:
             if d == 'all':
                 use_all = True
+
+        # Before all interfaces are brought up, any IPv4 / IPv6 addresses
+        # should be cleared to avoid the issue where Ubuntu does not clear out
+        # old addresses from previous captures using the standard command:
+        # `ifdown iface && ifup iface`
         if use_all:
+            # cloud-init with debian seems to always use 'all', so we need to
+            # get the interface names manually, unfortunately
+            interfaces = self._get_all_interfaces()
+            self._clear_addresses(interfaces)
             return distros.Distro._bring_up_interface(self, '--all')
         else:
+            self._clear_addresses(device_names)
             return distros.Distro._bring_up_interfaces(self, device_names)
+
+    def _clear_addresses(self, interfaces):
+        """
+        Removes any IPv4 addresses associated with each of the interface names
+        in 'interfaces'.  Also checks if the interface name has an associated
+        IPv6 address, and if so, removes it as well.
+        """
+        for iface in interfaces:
+            # Remove IPv4 address regardless of whether it exists or not
+            util.subp(['ifconfig', iface, '0.0.0.0'])
+            ipv6_addr = self._get_ipv6_addr(iface)
+            if ipv6_addr is not None:
+                # Remove IPv6 address since it exists
+                util.subp(['ifconfig', iface, 'inet6', 'del', ipv6_addr])
+
+    def _get_ipv6_addr(self, interface):
+        """
+        Returns None if the given interface name does not have an associated
+        IPv6 address.  Otherwise, returns the IPv6 address as a string.
+        """
+        output = util.subp(['ifconfig %s | grep "inet6 addr.*Scope:Global" '
+                            '| rev | cut -d" " -f2 | rev' % interface],
+                           shell=True)
+        stdout = output[0]
+
+        if stdout.isspace() or stdout == '':
+            return None
+        return stdout
+
+    def _get_all_interfaces(self):
+        """
+        Returns all eth* interface names, active or inactive.
+        """
+        output = util.subp(['ifconfig -a | grep -o "eth[0-9]*"'], shell=True)
+        stdout = output[0]
+
+        # stdout lists interfaces separated with newlines with an extra on the
+        # end
+        interfaces = stdout.split('\n')[:-1]
+        return interfaces
+
+    def _bring_down_interfaces(self, device_names):
+        use_all = False
+        for d in device_names:
+            if d == 'all':
+                use_all = True
+        if use_all:
+            return distros.Distro._bring_down_interface(self, '--all')
+        else:
+            return distros.Distro._bring_down_interfaces(self, device_names)
+
+    def _find_all_interfaces(self):
+        device_names = util.subp(['ifconfig'])
 
     def _select_hostname(self, hostname, fqdn):
         # Prefer the short hostname over the long
