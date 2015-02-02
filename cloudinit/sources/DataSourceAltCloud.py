@@ -116,7 +116,7 @@ class DataSourceAltCloud(sources.DataSource):
         '''
 
         uname_arch = os.uname()[4]
-        if uname_arch.startswith("arm") or uname_arch == "aarch64":
+        if uname_arch.startswith("arm") or uname_arch == "aarch64" or uname_arch.startswith("ppc"):
             # Disabling because dmidecode in CMD_DMI_SYSTEM crashes kvm process
             LOG.debug("Disabling AltCloud datasource on arm (LP: #1243287)")
             return 'UNKNOWN'
