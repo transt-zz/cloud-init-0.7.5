@@ -181,7 +181,14 @@ def route_pformat():
                         r['gateway'], r['genmask'],
                         r['iface'], r['flags']])
         route_s = tbl.get_string()
-        max_len = len(max(route_s.splitlines(), key=len))
+        # If the route info command has rc = 0 and returns no route
+        # information the routes list will be empty.
+        # Older versions of PrettyTable do not print empty tables and the
+        # max_len calculation below fails.  Set max_len to 80 in this case.
+        if route_s:
+            max_len = len(max(route_s.splitlines(), key=len))
+        else:
+            max_len = 80
         header = util.center("Route info", "+", max_len)
         lines.extend([header, route_s])
     return "\n".join(lines)
