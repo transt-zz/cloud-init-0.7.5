@@ -39,7 +39,11 @@ class Distro(distros.Distro):
     network_conf_fn = '/etc/sysconfig/network'
     hostname_conf_fn = '/etc/HOSTNAME'
     network_script_tpl = '/etc/sysconfig/network/ifcfg-%s'
+    network_script_dir = '/etc/sysconfig/network'
     resolve_conf_fn = '/etc/resolv.conf'
+    routes_fn = '/etc/sysconfig/network/routes'
+    net_rules_fn = '/etc/udev/rules.d/70-persistent-net.rules'
+    net_rules_entry_tpl = 'SUBSYSTEM=="net", ATTR{address}=="%s", NAME="%s"'
     tz_local_fn = '/etc/localtime'
 
     def __init__(self, name, cfg, paths):
@@ -53,37 +57,89 @@ class Distro(distros.Distro):
     def install_packages(self, pkglist):
         self.package_command('install', args='-l', pkgs=pkglist)
 
+    # override distros.Distro method to allow setting up persistence
+    def apply_network(self, settings, bring_up=True):
+        # Write it out
+        dev_names, mac_addrs = self._write_network(settings)
+
+        # Now try to bring them up
+        if bring_up:
+            self._bring_down_interfaces(dev_names)
+            self._set_up_persistence(dev_names, mac_addrs)
+            return self._bring_up_interfaces(dev_names)
+        return False    
+
+    def _set_up_persistence(self, dev_names, mac_addrs):
+        # generate the persistence file
+        net_rules = ''
+        for dev_name, mac_addr in zip(dev_names, mac_addrs):
+            if dev_name != 'lo':
+                net_rules += '\n'
+                net_rules += self.net_rules_entry_tpl % (mac_addr, dev_name)
+        util.write_file(self.net_rules_fn, net_rules, mode=0644)
+        
+        # reload udev rules to make interfaces have correct names
+        util.subp(['udevadm control --reload-rules && udevadm trigger'],
+                  shell=True)
+
     def _write_network(self, settings):
         # Convert debian settings to ifcfg format
         entries = net_util.translate_network(settings)
         LOG.debug("Translated ubuntu style network settings %s into %s",
                   settings, entries)
+
+        # Match Debian/Ubunto distro functionality of clean slating
+        # the network interface configuration.
+        # Remove all existing ifcfg-eth* files.  This cleans up files that
+        # are left around if you capture an image from a VM with 5 NICs
+        # and deploy it with 1 NIC.
+        rhel_util.remove_ifcfg_files(self.network_script_dir)
+        rhel_util.remove_resolve_conf_file(self.resolve_conf_fn)
+        util.del_file(self.routes_fn)
+
         # Make the intermediate format as the suse format...
         nameservers = []
         searchservers = []
         dev_names = entries.keys()
+        mac_addrs = []
         for (dev, info) in entries.iteritems():
+            mac_addrs.append(info.get('hwaddress'))
             net_fn = self.network_script_tpl % (dev)
             mode = info.get('auto')
-            if mode and mode.lower() == 'true':
+            if mode:
                 mode = 'auto'
             else:
                 mode = 'manual'
-            net_cfg = {
-                'BOOTPROTO': info.get('bootproto'),
-                'BROADCAST': info.get('broadcast'),
-                'GATEWAY': info.get('gateway'),
-                'IPADDR': info.get('address'),
-                'LLADDR': info.get('hwaddress'),
-                'NETMASK': info.get('netmask'),
-                'STARTMODE': mode,
-                'USERCONTROL': 'no'
-            }
+            net_cfg = {}
+            net_cfg['BOOTPROTO'] = info.get('bootproto')
+            net_cfg['BROADCAST'] = info.get('broadcast')
+            net_cfg['LLADDR'] = info.get('hwaddress')
+            net_cfg['STARTMODE'] = mode
+            if info['ipv6']:
+                prefix = info.get('netmask')
+                ipv6addr = info.get('address')
+                net_cfg['IPADDR_0'] = ipv6addr
+                net_cfg['PREFIXLEN_0'] = prefix
+                net_cfg['LABEL_0'] = '0'
+            if info['ipv4']:
+                net_cfg['NETMASK'] = info.get('netmask')
+                net_cfg['IPADDR'] = info.get('address')
             if dev != 'lo':
-                net_cfg['ETHERDEVICE'] = dev
+                # net_cfg['ETHERDEVICE'] = dev
                 net_cfg['ETHTOOL_OPTIONS'] = ''
+                net_cfg['USERCONTROL'] = 'no'
+                net_cfg['NM_CONTROLLED'] = 'no'
+                net_cfg['BRIDGE'] = 'yes'
             else:
                 net_cfg['FIREWALL'] = 'no'
+            if dev == 'eth0' and info.get('gateway'):
+                self._write_default_route(self.routes_fn, info.get('gateway'))
+
+            # Remove the existing cfg file so the network configuration
+            # is a replacement versus an update to match debian distro
+            # functionality.
+            if dev != 'lo':
+                util.del_file(net_fn)
             rhel_util.update_sysconfig_file(net_fn, net_cfg, True)
             if 'dns-nameservers' in info:
                 nameservers.extend(info['dns-nameservers'])
@@ -92,7 +148,11 @@ class Distro(distros.Distro):
         if nameservers or searchservers:
             rhel_util.update_resolve_conf_file(self.resolve_conf_fn,
                                                nameservers, searchservers)
-        return dev_names
+        return dev_names, mac_addrs
+
+    def _write_default_route(self, routesfile, gateway):
+        content = 'default %s - -\n' % gateway
+        util.write_file(routesfile, content, 0644)
 
     def apply_locale(self, locale, out_fn=None):
         if not out_fn:
