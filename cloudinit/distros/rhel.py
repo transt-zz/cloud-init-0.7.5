@@ -48,6 +48,7 @@ class Distro(distros.Distro):
     hostname_conf_fn = "/etc/sysconfig/network"
     systemd_hostname_conf_fn = "/etc/hostname"
     network_script_tpl = '/etc/sysconfig/network-scripts/ifcfg-%s'
+    network_script_dir = '/etc/sysconfig/network-scripts'
     resolve_conf_fn = "/etc/resolv.conf"
     tz_local_fn = "/etc/localtime"
 
@@ -67,6 +68,14 @@ class Distro(distros.Distro):
         entries = net_util.translate_network(settings)
         LOG.debug("Translated ubuntu style network settings %s into %s",
                   settings, entries)
+        # Match Debian/Ubunto distro functionality of clean slating
+        # the network interface configuration.
+        # Remove all existing ifcfg-eth* files.  This cleans up files that
+        # are left around if you capture an image from a VM with 5 NICs
+        # and deploy it with 1 NIC.
+        rhel_util.remove_ifcfg_files(self.network_script_dir)
+        rhel_util.remove_resolve_conf_file(self.resolve_conf_fn)
+
         # Make the intermediate format as the rhel format...
         nameservers = []
         searchservers = []
@@ -78,12 +87,20 @@ class Distro(distros.Distro):
                 'NETMASK': info.get('netmask'),
                 'IPADDR': info.get('address'),
                 'BOOTPROTO': info.get('bootproto'),
-                'GATEWAY': info.get('gateway'),
                 'BROADCAST': info.get('broadcast'),
                 'MACADDR': info.get('hwaddress'),
                 'ONBOOT': _make_sysconfig_bool(info.get('auto')),
             }
+            # Remove the existing cfg file so the network configuration
+            # is a replacement versus an update to match debian distro
+            # functionality.
+            if dev != 'lo':
+                net_cfg['USERCONTROL'] = 'no'
+                net_cfg['NM_CONTROLLED'] = 'no'
             rhel_util.update_sysconfig_file(net_fn, net_cfg)
+
+            if dev == 'eth0':
+                default_gateway = info.get('gateway') or ''
             if 'dns-nameservers' in info:
                 nameservers.extend(info['dns-nameservers'])
             if 'dns-search' in info:
@@ -94,8 +111,10 @@ class Distro(distros.Distro):
         if dev_names:
             net_cfg = {
                 'NETWORKING': _make_sysconfig_bool(True),
+                'GATEWAY': default_gateway,
             }
-            rhel_util.update_sysconfig_file(self.network_conf_fn, net_cfg)
+            rhel_util.update_sysconfig_file(self.network_conf_fn, net_cfg,
+                                            allow_empty=True)
         return dev_names
 
     def _dist_uses_systemd(self):
@@ -105,6 +124,18 @@ class Distro(distros.Distro):
         return ((dist.startswith('Red Hat Enterprise Linux') and major >= 7)
                 or (dist.startswith('Fedora') and major >= 18))
 
+    def apply_network(self, settings, bring_up=True):
+        (dist, vers) = util.system_info()['dist'][:2]
+        major = (int)(vers.split('.')[0])
+        # RHEL 7 runs cloud-init-local before networking is started.
+        # Attempting to bring the interfaces up hangs cloud-init-local
+        # and causes it to timeout.  Therefore for RHEL 7 we write the
+        # network configuration and let the network service bring them up
+        # when it is started. 
+        if dist.startswith('Red Hat Enterprise Linux') and major >= 7:
+            bring_up = False
+        super(Distro, self).apply_network(settings, bring_up)
+        
     def apply_locale(self, locale, out_fn=None):
         if self._dist_uses_systemd():
             if not out_fn:
