@@ -136,13 +136,22 @@ def handle(_name, cfg, cloud, log, args):
         util.write_file(ssh_util.DEF_SSHD_CFG, "\n".join(lines))
 
         try:
-            cmd = cloud.distro.get_init_cmd()
-            cmd.append(cloud.distro.get_option('ssh_svcname', 'ssh'))
-            cmd.append('restart')
-            if 'systemctl' in cmd:  # Switch action ordering
-                cmd[1], cmd[2] = cmd[2], cmd[1]
-            cmd = filter(None, cmd)  # Remove empty arguments
-            util.subp(cmd)
+            if cloud.distro.name == "aix":
+                cmd = ['/usr/bin/stopsrc', '-s', 'sshd']
+                # Allow 0 and 1 return codes since it wil return 1 if sshd is
+                # currently down.
+                util.subp(cmd, rcs=[0, 1])
+                cmd = ['/usr/bin/startsrc', '-s', 'sshd']
+                util.subp(cmd)
+                
+            else:
+                cmd = cloud.distro.get_init_cmd()
+                cmd.append(cloud.distro.get_option('ssh_svcname', 'ssh'))
+                cmd.append('restart')
+                if 'systemctl' in cmd:  # Switch action ordering
+                    cmd[1], cmd[2] = cmd[2], cmd[1]
+                cmd = filter(None, cmd)  # Remove empty arguments
+                util.subp(cmd)
             log.debug("Restarted the ssh daemon")
         except:
             util.logexc(log, "Restarting of the ssh daemon failed")
