@@ -177,3 +177,30 @@ def unmounter(umount):
             umount_cmd = ["/usr/sbin/umount", umount]
             util.subp(umount_cmd)
 
+# Helper function to write the resolv.conf file
+def write_resolv_conf_file(fn, r_conf):
+    util.write_file(fn, str(r_conf), 0644)
+
+# Helper function to write /etc/resolv.conf
+def update_resolve_conf_file(fn, dns_servers, search_servers):
+    try:
+        r_conf = ResolvConf(util.load_file(fn))
+        r_conf.parse()
+    except IOError:
+        util.logexc(LOG, "Failed at parsing %s reverting to an empty "
+                    "instance", fn)
+        r_conf = ResolvConf('')
+        r_conf.parse()
+    if dns_servers:
+        for s in dns_servers:
+            try:
+                r_conf.add_nameserver(s)
+            except ValueError:
+                util.logexc(LOG, "Failed at adding nameserver %s", s)
+    if search_servers:
+        for s in search_servers:
+            try:
+                r_conf.add_search_domain(s)
+            except ValueError:
+                util.logexc(LOG, "Failed at adding search domain %s", s)
+    write_resolv_conf_file(fn, r_conf)
