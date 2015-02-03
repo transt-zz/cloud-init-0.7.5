@@ -124,7 +124,7 @@ def mount_cb(device, callback, data=None, rw=False, mtype=None, sync=True):
                 umount = tmpd  # This forces it to be unmounted (when set)
                 mountpoint = tmpd
             except (IOError, OSError) as exc:
-                raise MountFailedError(("Failed mounting %s to %s due to: %s") % (device, tmpd, exc))
+                raise util.MountFailedError(("Failed mounting %s to %s due to: %s") % (device, tmpd, exc))
         # Be nice and ensure it ends with a slash
         if not mountpoint.endswith("/"):
             mountpoint += "/"
