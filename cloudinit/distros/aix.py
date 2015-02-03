@@ -46,6 +46,7 @@ class Distro(distros.Distro):
         dev_names = self._write_network(settings)
         # Now try to bring them up
         if bring_up:
+            self._bring_down_interfaces(dev_names)
             return self._bring_up_interfaces(dev_names)
         return False
 
@@ -88,7 +89,7 @@ class Distro(distros.Distro):
                 searchservers.extend(info['dns-search'])
 
         if nameservers or searchservers:
-            rhel_util.update_resolve_conf_file(self.resolve_conf_fn, nameservers, searchservers)
+            aix_util.update_resolve_conf_file(self.resolve_conf_fn, nameservers, searchservers)
         return dev_names
 
     def apply_locale(self, locale, out_fn=None):
@@ -143,6 +144,32 @@ class Distro(distros.Distro):
             if not self._bring_up_interface(d):
                 return False
         return True
+
+    def _bring_down_interface(self, device_name):
+        if device_name in 'lo':
+            return True
+
+        cmd = ['/usr/sbin/chdev', '-l', aix_util.translate_devname(device_name), '-a', 'state=down']
+        LOG.debug("Attempting to run bring down interface %s using command %s", device_name, cmd)
+        try:
+            (_out, err) = util.subp(cmd)
+            if len(err):
+                LOG.warn("Running %s resulted in stderr output: %s", cmd, err)
+            return True
+        except util.ProcessExecutionError:
+            util.logexc(LOG, "Running interface command %s failed", cmd)
+            return False
+
+    def _bring_down_interfaces(self, device_names):
+        if device_names and 'all' in device_names:
+            raise RuntimeError(('Distro %s can not translate the device name "all"') % (self.name))
+        am_failed = 0
+        for d in device_names:
+            if not self._bring_down_interface(d):
+                am_failed += 1
+        if am_failed == 0:
+            return True
+        return False
 
     def set_timezone(self, tz):
         cmd = ['/usr/bin/chtz', tz]
