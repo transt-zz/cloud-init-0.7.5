@@ -55,7 +55,7 @@ from cloudinit import util
 
 frequency = PER_INSTANCE
 
-distros = ['fedora', 'rhel', 'sles']
+distros = ['fedora', 'opensuse', 'rhel', 'sles', 'aix']
 
 
 def generate_resolv_conf(cloud, log, params):
@@ -79,8 +79,14 @@ def generate_resolv_conf(cloud, log, params):
 
     params['flags'] = flags
     log.debug("Writing resolv.conf from template %s" % template_fn)
-    templater.render_to_file(template_fn, '/etc/resolv.conf', params)
-
+    if cloud.distro.name == "aix":
+        templater.render_to_file(template_fn, '/etc/resolv.conf', params)
+    else:
+        # Network Manager likes to overwrite the resolv.conf file, so make sure
+        # it is immutable after write
+        util.subp(['chattr', '-i', '/etc/resolv.conf'])
+        templater.render_to_file(template_fn, '/etc/resolv.conf', params)
+        util.subp(['chattr', '+i', '/etc/resolv.conf'])
 
 def handle(name, cfg, _cloud, log, _args):
     """
