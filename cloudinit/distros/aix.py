@@ -16,6 +16,7 @@ from cloudinit import distros
 from cloudinit import helpers
 from cloudinit import log as logging
 from cloudinit import util
+from cloudinit import ssh_util
 
 from cloudinit.distros import net_util
 from cloudinit.distros import rhel_util
@@ -100,7 +101,7 @@ class Distro(distros.Distro):
         util.subp(['/usr/sbin/chdev', '-l', 'inet0', '-a', 'hostname=' + str(hostname)])
 
         # Change the node for the uname process
-        util.subp(['/usr/bin/uname', '-S', str(hostname)])
+        util.subp(['/usr/bin/uname', '-S', str(hostname)][0:32])
 
         # Change the hostname on the current running system
         util.subp(['/usr/bin/hostname', str(hostname)])
