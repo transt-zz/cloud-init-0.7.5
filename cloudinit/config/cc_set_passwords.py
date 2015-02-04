@@ -142,7 +142,7 @@ def handle(_name, cfg, cloud, log, args):
         try:
             if cloud.distro.name == "aix":
                 cmd = ['/usr/bin/stopsrc', '-s', 'sshd']
-                # Allow 0 and 1 return codes since it wil return 1 if sshd is
+                # Allow 0 and 1 return codes since it will return 1 if sshd is
                 # currently down.
                 util.subp(cmd, rcs=[0, 1])
                 cmd = ['/usr/bin/startsrc', '-s', 'sshd']
