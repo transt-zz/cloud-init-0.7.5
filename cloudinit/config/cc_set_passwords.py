@@ -93,8 +93,12 @@ def handle(_name, cfg, cloud, log, args):
             expired_users = []
             for u in users:
                 try:
-                    util.subp(['passwd', '--expire', u])
-                    expired_users.append(u)
+                    if cloud.distro.name == "aix":
+                        util.subp(['/usr/bin/pwdadm', '-f', 'ADMCHG', u])
+                        expired_users.append(u)
+                    else:
+                        util.subp(['passwd', '--expire', u])
+                        expired_users.append(u)
                 except Exception as e:
                     errors.append(e)
                     util.logexc(log, "Failed to set 'expire' for %s", u)
