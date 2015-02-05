@@ -29,6 +29,9 @@ def handle(_name, cfg, _cloud, log, _args):
     idevs = None
     idevs_empty = None
 
+    if _cloud.distro.name not in distros:
+        return
+
     if "grub-dpkg" in cfg:
         idevs = util.get_cfg_option_str(cfg["grub-dpkg"],
             "grub-pc/install_devices", None)
