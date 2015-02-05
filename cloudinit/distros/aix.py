@@ -94,7 +94,7 @@ class Distro(distros.Distro):
         return dev_names
 
     def apply_locale(self, locale, out_fn=None):
-        util.subp(['/usr/bin/chlang', '-m', str(locale)])
+        util.subp(['/usr/bin/chlang', '-M', str(locale)])
 
     def _write_hostname(self, hostname, out_fn):
         # Permanently change the hostname for inet0 device in the ODM
