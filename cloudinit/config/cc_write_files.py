@@ -30,6 +30,10 @@ UNKNOWN_ENC = 'text/plain'
 
 
 def handle(name, cfg, _cloud, log, _args):
+    if _cloud.distro.name == "aix":
+        global DEFAULT_OWNER
+        DEFAULT_OWNER = "root:system"
+
     files = cfg.get('write_files')
     if not files:
         log.debug(("Skipping module named %s,"
