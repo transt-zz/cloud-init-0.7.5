@@ -148,7 +148,10 @@ class DataSource(object):
         return None
 
     def get_locale(self):
-        return 'en_US.UTF-8'
+        if self.distro.name == "aix":
+            return 'en_US'
+        else:
+            return 'en_US.UTF-8'
 
     @property
     def availability_zone(self):
