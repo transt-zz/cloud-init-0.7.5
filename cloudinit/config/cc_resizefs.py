@@ -76,6 +76,9 @@ def rootdev_from_cmdline(cmdline):
 
 
 def handle(name, cfg, _cloud, log, args):
+    if _cloud.distro.name == "aix":
+        return
+
     if len(args) != 0:
         resize_root = args[0]
     else:
