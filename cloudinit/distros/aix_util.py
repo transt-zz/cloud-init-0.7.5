@@ -204,3 +204,11 @@ def update_resolve_conf_file(fn, dns_servers, search_servers):
             except ValueError:
                 util.logexc(LOG, "Failed at adding search domain %s", s)
     write_resolv_conf_file(fn, r_conf)
+
+# Overwrite the existing conf file so the resolv.conf
+# is a replacement versus an update to eliminate unwanted
+# existing changes from previous capture data
+def remove_resolve_conf_file(fn):
+    r_conf = ResolvConf('')
+    r_conf.parse()
+    write_resolv_conf_file(fn, r_conf)

@@ -53,6 +53,7 @@ class Distro(distros.Distro):
 
     def _write_network(self, settings):
         entries = net_util.translate_network(settings)
+        aix_util.remove_resolve_conf_file(self.resolve_conf_fn)
         print("Translated ubuntu style network settings %s into %s" % (settings, entries))
         # Make the intermediate format as the rhel format...
         nameservers = []
@@ -108,7 +109,7 @@ class Distro(distros.Distro):
 
     def _select_hostname(self, hostname, fqdn):
         # Should be fqdn if we can use it
-        if fqdn:
+        if not hostname:
             return fqdn
         return hostname
 
