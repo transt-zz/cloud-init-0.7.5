@@ -32,35 +32,129 @@ def translate_devname(devname):
         return devname
 
 # Call chdev to add route
-def add_route(route):
+def add_route(network, route):
     # First, delete the route if it exists on the system
-    del_route(route)
+    del_route(network, route)
 
     # Add the route if there isn't already a default route
-    if get_route() is None:
-        cmd = ['/usr/sbin/chdev', '-l', 'inet0']
-        cmd.append("-aroute=" + "\"net,-hopcount,0,,0," + route + "\"")
-        util.subp(cmd, capture=False)
+    cmd = ['/usr/sbin/chdev', '-l', 'inet0']
+
+    if network == 'ipv4':
+        cmd.extend(["-aroute=" + "net,-hopcount,0,,0," + route])
+    elif network == 'ipv6':
+        cmd.extend(["-arout6=" + "net,-hopcount,0,,,::," + route])
+
+    if get_route(network) is None:
+        util.subp(cmd, capture=False, rcs=[0, 1])
 
 # Call chdev to delete default route
-def del_route(route):
+def del_route(network, route):
     # if route exists, delete it
-    if (route == get_route()):
+    route_out = get_route(network)
+    if route_out is not None:
         cmd = ['/usr/sbin/chdev', '-l', 'inet0']
-        cmd.append("-adelroute=" + "\"net,-hopcount,0,,0," + route + "\"")
-        util.subp(cmd, capture=False)
+        if network == 'ipv4' and route == route_out.split(",")[5]:
+            cmd.append("-adelroute=\"" + route_out + "\"")
+        elif network == 'ipv6' and route == route_out.split(",")[6]:
+            cmd.append("-adelrout6=\"" + route_out + "\"")
+        util.subp(cmd, capture=False, rcs=[0, 1])
 
 # Return the default route
-def get_route():
+def get_route(network):
     # First, delete the route
-    cmd = ['/usr/sbin/lsattr', '-E', '-l', 'inet0', '-a', 'route', '-F', 'value']
+    if network == 'ipv4':
+        cmd = ['/usr/sbin/lsattr', '-El', 'inet0', '-a', 'route', '-F', 'value']
+    elif network == 'ipv6':
+        cmd = ['/usr/sbin/lsattr', '-El', 'inet0', '-a', 'rout6', '-F', 'value']
     (out, err) = util.subp(cmd)
 
     out = out.strip()
     if len(out):
-        return out.split(",")[5]
+        return out
     else:
         return None
+
+def enable_autoconf6(device_name):
+    cmd = ['/usr/sbin/chrctcp', '-c', 'autoconf6', '-f', "interface=" + device_name]
+    util.subp(cmd, capture=False)
+
+def start_autoconf6(device_name):
+    enable_autoconf6(device_name)
+    cmd = ['/usr/sbin/autoconf6', '-i', device_name]
+    util.subp(cmd, capture=False)
+
+def enable_ndpd_host():
+    cmd = ['/usr/sbin/chrctcp', '-a', 'ndpd-host']
+    util.subp(cmd, capture=False)
+
+def start_ndpd_host():
+    enable_ndpd_host()
+    cmd = ['/usr/bin/startsrc', '-s', 'ndpd-host']
+    util.subp(cmd, capture=False)
+
+def enable_dhcpcd():
+    cmd = ['/usr/sbin/chrctcp', '-S', '-a', 'dhcpcd']
+    util.subp(cmd, capture=False)
+
+def start_dhcpcd():
+    cmd = ['/usr/bin/startsrc', '-s', 'dhcpcd']
+    util.subp(cmd, capture=False)
+
+#
+# Update the /etc/dhcpcd.ini file with the following from
+# the info dictionary
+#
+# option 1  : Subnet Mask
+# option 3  : Routers (ip addresses)
+# option 50 : Requested IP Address
+#
+def update_dhcp(tmpf, interface, info):
+    util.append_file(tmpf, "interface %s\n" % interface)
+    util.append_file(tmpf, "{\n")
+    if info.get('netmask'): util.append_file(tmpf, " option 1  %s\n" % (info.get('netmask')))
+    if info.get('gateway'): util.append_file(tmpf, " option 3  %s\n" % (info.get('gateway')))
+    if info.get('address'): util.append_file(tmpf, " option 50 %s\n" % (info.get('address')))
+    util.append_file(tmpf, "}\n\n")
+
+#
+# Parse the /etc/dhcpcd.ini file and update it with network information
+# from the info dictionary produce by aix.py -> _write_network()
+#
+# create = True, create a new /etc/dhcpcd.ini file
+#        = False, go to the end and update /etc/dhcpcd.ini
+#
+def config_dhcp(interface, info, create=True):
+    infile = "/etc/dhcpcd.ini"
+    eat = 0
+    updated = 0
+
+    if interface is not None:
+        with open(infile, 'r+') as f, util.tempdir() as tmpd:
+            tmpf = "%s/dhcpcd.ini" % tmpd
+            for line in f.readlines():
+                if create is False:
+                    util.append_file(tmpf, line)
+                else:
+                    if eat == 0 and not line.startswith("interface "):
+                        util.append_file(tmpf, line)
+                    elif eat == 0 and line.startswith("interface "):
+                        eat = 1
+                    elif eat == 1 and re.match("{", line.strip()):
+                        eat = 2
+                    elif eat == 2:
+                        update_dhcp(tmpf, interface, info)
+                        updated = 1
+                        eat = 3
+            if create is False:
+                update_dhcp(tmpf, interface, info)
+            else:
+                if updated == 0:
+                    update_dhcp(tmpf, interface, info)
+
+            util.copy(tmpf, infile)
+
+            enable_dhcpcd()
+            start_dhcpcd()
 
 # Return the device using the lsdev command output
 def find_devs_with(path=None):

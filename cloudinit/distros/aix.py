@@ -59,31 +59,55 @@ class Distro(distros.Distro):
         nameservers = []
         searchservers = []
         dev_names = entries.keys()
-
-        chdev_cmd = ['/usr/sbin/chdev']
-        log_chdev_cmd = ['/usr/sbin/chdev']
-        chdev_opts = {
-                "address" : '-anetaddr=',
-                "netmask" : '-anetmask=',
-        }
+        create_dhcp_file = True
 
         for (dev, info) in entries.iteritems():
+            run_cmd = 0
+            chdev_cmd = ['/usr/sbin/chdev']
+            log_chdev_cmd = ['/usr/sbin/chdev']
+
             if dev not in 'lo':
-                chdev_cmd.extend(['-l', aix_util.translate_devname(dev)])
-                log_chdev_cmd.extend(['-l', aix_util.translate_devname(dev)])
-                for (key, val) in info.iteritems():
-                    if key in chdev_opts and val and isinstance(val, basestring):
-                        chdev_cmd.append(chdev_opts[key] + val)
-                        log_chdev_cmd.append(chdev_opts[key] + val)
-                chdev_cmd.append("-astate=down")
-                log_chdev_cmd.append("-astate=down")
+                aix_dev = aix_util.translate_devname(dev)
+                if info.get('bootproto') == 'dhcp':
+                    aix_util.config_dhcp(aix_dev, info, create_dhcp_file)
+                    create_dhcp_file = False
+                else:
+                    chdev_cmd.extend(['-l', aix_dev])
+                    log_chdev_cmd.extend(['-l', aix_dev])
 
-                try:
-                    util.subp(chdev_cmd, logstring=log_chdev_cmd)
-                except Exception as e:
-                    raise e
+                    if info['ipv6'] == True:
+                        chdev_opts = {
+                            "address" : '-anetaddr6=',
+                            "netmask" : '-aprefixlen=',
+                        }
+                        run_cmd = 1
+                        aix_util.start_autoconf6(aix_dev)
+                        aix_util.start_ndpd_host()
 
-                aix_util.add_route(info.get('gateway'))
+                    if info['ipv4'] == True:
+                        chdev_opts = {
+                            "address" : '-anetaddr=',
+                            "netmask" : '-anetmask=',
+                        }
+                        run_cmd = 1
+
+                    for (key, val) in info.iteritems():
+                        if key in chdev_opts and val and isinstance(val, basestring):
+                            chdev_cmd.append(chdev_opts[key] + val)
+                            log_chdev_cmd.append(chdev_opts[key] + val)
+                    chdev_cmd.append("-astate=down")
+                    log_chdev_cmd.append("-astate=down")
+
+                    if run_cmd:
+                        try:
+                            util.subp(chdev_cmd, logstring=log_chdev_cmd)
+                        except Exception as e:
+                            raise e
+
+                        if info['ipv6'] == True:
+                            aix_util.add_route("ipv6", info.get('gateway'))
+                        if info['ipv4'] == True:
+                            aix_util.add_route("ipv4", info.get('gateway'))
 
             if 'dns-nameservers' in info:
                 nameservers.extend(info['dns-nameservers'])
@@ -101,14 +125,13 @@ class Distro(distros.Distro):
         # Permanently change the hostname for inet0 device in the ODM
         util.subp(['/usr/sbin/chdev', '-l', 'inet0', '-a', 'hostname=' + str(hostname)])
 
+        shortname = hostname.split('.')[0]
         # Change the node for the uname process
-        util.subp(['/usr/bin/uname', '-S', str(hostname)][0:32])
-
-        # Change the hostname on the current running system
-        util.subp(['/usr/bin/hostname', str(hostname)])
+        util.subp(['/usr/bin/uname', '-S', str(hostname)[0:32]])
 
     def _select_hostname(self, hostname, fqdn):
-        # Should be fqdn if we can use it
+        # Prefer the short hostname over the long
+        # fully qualified domain name
         if not hostname:
             return fqdn
         return hostname

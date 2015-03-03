@@ -65,7 +65,7 @@ def netdev_info(empty=""):
             # Couple the different items we're interested in with the correct
             # field since FreeBSD/CentOS/Fedora differ in the output.
             ifconfigfields = {
-                "addr:": "addr", "inet": "addr",
+                "addr:": "addr", "inet": "addr", "inet6": "addr",
                 "bcast:": "bcast", "broadcast": "bcast",
                 "mask:": "mask", "netmask": "mask",
                 "hwaddr": "hwaddr", "ether": "hwaddr",
