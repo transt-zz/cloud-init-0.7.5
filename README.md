@@ -82,4 +82,3 @@ python-requests-2.4.3-1.aix6.1.noarch.rpm
 libyaml-0.1.4-1.aix6.1.ppc.rpm
 python-PyYAML-3.11-2.aix6.1.ppc.rpm
 python-six-1.3.0-1.aix6.1.noarch.rpm
-
