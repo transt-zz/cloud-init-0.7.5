@@ -34,7 +34,7 @@ def netdev_info(empty=""):
         if len(line) == 0:
             continue
         if line[0] not in ("\t", " "):
-            curdev = line.split()[0]
+            curdev = line.split()[0].replace(':', '')
             devs[curdev] = {"up": False}
             for field in fields:
                 devs[curdev][field] = ""
