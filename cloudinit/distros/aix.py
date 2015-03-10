@@ -60,7 +60,15 @@ class Distro(distros.Distro):
         searchservers = []
         dev_names = entries.keys()
         create_dhcp_file = True
+        run_dhcpcd = False
+        run_autoconf6 = False
+        ipv6_interface = None
 
+        # First, make sure the services starts out uncommented in /etc/rc.tcpip 
+        aix_util.disable_dhcpcd()
+        aix_util.disable_ndpd_host()
+        aix_util.disable_autoconf6()
+     
         for (dev, info) in entries.iteritems():
             run_cmd = 0
             chdev_cmd = ['/usr/sbin/chdev']
@@ -71,6 +79,7 @@ class Distro(distros.Distro):
                 if info.get('bootproto') == 'dhcp':
                     aix_util.config_dhcp(aix_dev, info, create_dhcp_file)
                     create_dhcp_file = False
+                    run_dhcp = True
                 else:
                     chdev_cmd.extend(['-l', aix_dev])
                     log_chdev_cmd.extend(['-l', aix_dev])
@@ -81,8 +90,12 @@ class Distro(distros.Distro):
                             "netmask" : '-aprefixlen=',
                         }
                         run_cmd = 1
-                        aix_util.start_autoconf6(aix_dev)
-                        aix_util.start_ndpd_host()
+                        run_autoconf6 = True
+
+                        if ipv6_interface is None:
+                            ipv6_interface = aix_dev
+                        else:
+                            ipv6_interface = "any"
 
                     if info['ipv4'] == True:
                         chdev_opts = {
@@ -114,6 +127,12 @@ class Distro(distros.Distro):
             if 'dns-search' in info:
                 searchservers.extend(info['dns-search'])
 
+        if run_dhcp:
+            aix_util.enable_dhcpcd()
+        if run_autoconf6:
+            aix_util.enable_ndpd_host()
+            aix_util.enable_autoconf6(ipv6_interface)
+
         if nameservers or searchservers:
             aix_util.update_resolve_conf_file(self.resolve_conf_fn, nameservers, searchservers)
         return dev_names
@@ -127,7 +146,7 @@ class Distro(distros.Distro):
 
         shortname = hostname.split('.')[0]
         # Change the node for the uname process
-        util.subp(['/usr/bin/uname', '-S', str(hostname)[0:32]])
+        util.subp(['/usr/bin/uname', '-S', str(shortname)[0:32]])
 
     def _select_hostname(self, hostname, fqdn):
         # Prefer the short hostname over the long

@@ -44,7 +44,7 @@ def add_route(network, route):
     elif network == 'ipv6':
         cmd.extend(["-arout6=" + "net,-hopcount,0,,,::," + route])
 
-    if get_route(network) is None:
+    if get_route(network) is None and len(cmd) > 3:
         util.subp(cmd, capture=False, rcs=[0, 1])
 
 # Call chdev to delete default route
@@ -57,7 +57,9 @@ def del_route(network, route):
             cmd.append("-adelroute=\"" + route_out + "\"")
         elif network == 'ipv6' and route == route_out.split(",")[6]:
             cmd.append("-adelrout6=\"" + route_out + "\"")
-        util.subp(cmd, capture=False, rcs=[0, 1])
+
+        if len(cmd) > 3: 
+            util.subp(cmd, capture=False, rcs=[0, 1])
 
 # Return the default route
 def get_route(network):
@@ -74,30 +76,43 @@ def get_route(network):
     else:
         return None
 
+# Enable the autoconf6 daemon in /etc/rc.tcpip
 def enable_autoconf6(device_name):
     cmd = ['/usr/sbin/chrctcp', '-c', 'autoconf6', '-f', "interface=" + device_name]
     util.subp(cmd, capture=False)
+    start_autoconf6(device_name)
 
+# Disable the autoconf6 daemon in /etc/rc.tcpip
+def disable_autoconf6():
+    cmd = ['/usr/sbin/chrctcp', '-d', 'autoconf6']
+    util.subp(cmd, capture=False)
+
+# Configure the IPv6 network interfaces
 def start_autoconf6(device_name):
-    enable_autoconf6(device_name)
-    cmd = ['/usr/sbin/autoconf6', '-i', device_name]
+    if device_name == "any":
+        cmd = ['/usr/sbin/autoconf6', '-A']
+    else:
+        cmd = ['/usr/sbin/autoconf6', '-i', device_name]
     util.subp(cmd, capture=False)
 
+# Enable the ndpd-host daemon in /etc/rc.tcpip and start the service
 def enable_ndpd_host():
-    cmd = ['/usr/sbin/chrctcp', '-a', 'ndpd-host']
+    cmd = ['/usr/sbin/chrctcp', '-S', '-a', 'ndpd-host']
     util.subp(cmd, capture=False)
 
-def start_ndpd_host():
-    enable_ndpd_host()
-    cmd = ['/usr/bin/startsrc', '-s', 'ndpd-host']
+# Disable the ndpd-host daemon in /etc/rc.tcpip and stop the daemon
+def disable_ndpd_host():
+    cmd = ['/usr/sbin/chrctcp', '-S', '-d', 'ndpd-host']
     util.subp(cmd, capture=False)
 
+# Enable the dhcpcd daemon in /etc/rc.tcpip and start the service
 def enable_dhcpcd():
     cmd = ['/usr/sbin/chrctcp', '-S', '-a', 'dhcpcd']
     util.subp(cmd, capture=False)
 
-def start_dhcpcd():
-    cmd = ['/usr/bin/startsrc', '-s', 'dhcpcd']
+# Disable the dhcpcd daemon in /etc/rc.tcpip and stop the service
+def disable_dhcpcd():
+    cmd = ['/usr/sbin/chrctcp', '-S', '-d', 'dhcpcd']
     util.subp(cmd, capture=False)
 
 #
@@ -152,9 +167,6 @@ def config_dhcp(interface, info, create=True):
                     update_dhcp(tmpf, interface, info)
 
             util.copy(tmpf, infile)
-
-            enable_dhcpcd()
-            start_dhcpcd()
 
 # Return the device using the lsdev command output
 def find_devs_with(path=None):
