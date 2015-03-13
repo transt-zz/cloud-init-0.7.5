@@ -117,10 +117,11 @@ class Distro(distros.Distro):
                         except Exception as e:
                             raise e
 
-                        if info['ipv6'] == True:
-                            aix_util.add_route("ipv6", info.get('gateway'))
-                        if info['ipv4'] == True:
-                            aix_util.add_route("ipv4", info.get('gateway'))
+                        if aix_dev == "en0":
+                            if info['ipv6'] == True:
+                                aix_util.add_route("ipv6", info.get('gateway'))
+                            if info['ipv4'] == True:
+                                aix_util.add_route("ipv4", info.get('gateway'))
 
             if 'dns-nameservers' in info:
                 nameservers.extend(info['dns-nameservers'])
