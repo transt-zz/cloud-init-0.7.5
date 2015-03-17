@@ -79,7 +79,7 @@ class Distro(distros.Distro):
                 if info.get('bootproto') == 'dhcp':
                     aix_util.config_dhcp(aix_dev, info, create_dhcp_file)
                     create_dhcp_file = False
-                    run_dhcp = True
+                    run_dhcpcd = True
                 else:
                     chdev_cmd.extend(['-l', aix_dev])
                     log_chdev_cmd.extend(['-l', aix_dev])
@@ -128,7 +128,7 @@ class Distro(distros.Distro):
             if 'dns-search' in info:
                 searchservers.extend(info['dns-search'])
 
-        if run_dhcp:
+        if run_dhcpcd:
             aix_util.enable_dhcpcd()
         if run_autoconf6:
             aix_util.enable_ndpd_host()
