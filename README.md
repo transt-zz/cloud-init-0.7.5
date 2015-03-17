@@ -52,7 +52,7 @@ The RPM packages can be obtained from the following website:
 
 > *Note:*
 
->- the RPM flag of *--nodep* is needed for installing gettext-0.17-8.aix6.1.ppc.rpm
+>- the RPM flag of *--nodeps* is needed for installing gettext-0.17-8.aix6.1.ppc.rpm
 
 - [bzip2-1.0.6-2.aix6.1.ppc.rpm][2]
 - [db-4.8.24-4.aix6.1.ppc.rpm][3]
