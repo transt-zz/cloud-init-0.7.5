@@ -27,7 +27,7 @@ from prettytable import PrettyTable
 
 
 def netdev_info(empty=""):
-    fields = ("hwaddr", "addr", "bcast", "mask")
+    fields = ("hwaddr", "addr", "bcast", "mask", 'addr6')
     (ifcfg_out, _err) = util.subp(["ifconfig", "-a"])
     devs = {}
     for line in str(ifcfg_out).splitlines():
@@ -44,7 +44,7 @@ def netdev_info(empty=""):
         # If the output of ifconfig doesn't contain the required info in the
         # obvious place, use a regex filter to be sure.
         elif len(toks) > 1:
-            if re.search(r"flags=\d+<up,", toks[1]):
+            if re.search(r"flags=[a-zA-Z0-9,]+<up,", toks[1]):
                 devs[curdev]['up'] = True
 
         fieldpost = ""
@@ -72,15 +72,23 @@ def netdev_info(empty=""):
             }
             for origfield, field in ifconfigfields.items():
                 target = "%s%s" % (field, fieldpost)
-                if devs[curdev].get(target, ""):
+                if target != 'addr6' and devs[curdev].get(target, ""):
                     continue
+                if target == 'addr6' and not devs[curdev].get(target, []):
+                    devs[curdev][target] = []
+                value = ""
                 if toks[i] == "%s" % origfield:
                     try:
-                        devs[curdev][target] = toks[i + 1]
+                        value = toks[i + 1]
                     except IndexError:
                         pass
                 elif toks[i].startswith("%s" % origfield):
-                    devs[curdev][target] = toks[i][len(field) + 1:]
+                    value = toks[i][len(field) + 1:]
+
+                if value and target == 'addr6':
+                    devs[curdev][target].append(value)
+                elif value:
+                    devs[curdev][target] = value
 
     if empty != "":
         for (_devname, dev) in devs.iteritems():
@@ -96,7 +104,7 @@ def route_info():
     routes = []
     entries = route_out.splitlines()[1:]
     for line in entries:
-        if not line:
+        if not line or "Route tree" in line:
             continue
         toks = line.split()
 
@@ -153,10 +161,12 @@ def netdev_pformat():
         lines.append(util.center("Net device info failed", '!', 80))
         netdev = None
     if netdev is not None:
-        fields = ['Device', 'Up', 'Address', 'Mask', 'Hw-Address']
+        fields = ['Device', 'Up', 'Address', 'Mask', 'Hw-Address',
+                  'IPv6 Addresses']
         tbl = PrettyTable(fields)
         for (dev, d) in netdev.iteritems():
-            tbl.add_row([dev, d["up"], d["addr"], d["mask"], d["hwaddr"]])
+            tbl.add_row([dev, d["up"], d["addr"], d["mask"], d["hwaddr"],
+                         d['addr6']])
         netdev_s = tbl.get_string()
         max_len = len(max(netdev_s.splitlines(), key=len))
         header = util.center("Net device info", "+", max_len)

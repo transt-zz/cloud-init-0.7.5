@@ -28,38 +28,27 @@ def handle(name, _cfg, _cloud, log, _args):
     log.debug('Setting hostname based on interface %s' % interface)
     set_hostname = False
     fqdn = None
-    ipv4addr = None
-    ipv6addr = None
     # Look up the IP address on the interface
     # and then reverse lookup the hostname in DNS
     info = netinfo.netdev_info()
     if interface in info:
-        if 'addr' in info[interface]:
-            ipv4addr = info[interface]['addr']
-        if 'addr6' in info[interface]:
-            ipv6addr = info[interface]['addr6'].split('/')[0]
+        set_short = util.get_cfg_option_bool(_cfg, "set_dns_shortname", False)
+        if 'addr' in info[interface] and info[interface]['addr']:
+            # Handle IPv4 address
+            set_hostname =_set_hostname(_cfg, _cloud, log,
+                                        info[interface]['addr'], set_short)
+        elif 'addr6' in info[interface] and info[interface]['addr6']:
+            # Handle IPv6 addresses
+            for ipaddr in info[interface]['addr6']:
+                ipaddr = ipaddr.split('/')[0]
+                set_hostname = _set_hostname(_cfg, _cloud, log, ipaddr,
+                                             set_short)
+                if set_hostname:
+                    break
     else:
         log.warning('Interface %s was not found on the system. '
                     'Interfaces found on system: %s' % (interface,
                                                         info.keys()))
-    ipaddr = ipv4addr or ipv6addr
-    log.debug('ipaddr: %s' % ipaddr)
-    try:
-        set_short = util.get_cfg_option_bool(_cfg, "set_dns_shortname", False)
-        addrinfo = socket.getaddrinfo(ipaddr, None, 0, socket.SOCK_STREAM)
-        log.debug('addrinfo: %s' % addrinfo)
-        if addrinfo:
-            (fqdn, port) = socket.getnameinfo(addrinfo[0][4],
-                                              socket.NI_NAMEREQD)
-            if fqdn:
-                log.info('Setting hostname on VM as %s' % fqdn)
-                hostname = fqdn.split('.')[0] if set_short else fqdn
-                _cloud.distro.set_hostname(hostname, fqdn=hostname)
-                set_hostname = True
-    except socket.error:
-        log.warning('No hostname found for IP address %s' % ipaddr)
-    except socket.gaierror:
-        log.warning('Unable to resolve hostname for IP address %s' % ipaddr)
 
     # Reverse lookup failed, fall back to cc_set_hostname way.
     if not set_hostname:
@@ -70,3 +59,23 @@ def handle(name, _cfg, _cloud, log, _args):
         except Exception:
             util.logexc(log, "Failed to set the hostname to %s", fqdn)
             raise
+
+
+def _set_hostname(_cfg, _cloud, log, ipaddr, set_short):
+    log.debug('ipaddr: %s' % ipaddr)
+    try:
+        addrinfo = socket.getaddrinfo(ipaddr, None, 0, socket.SOCK_STREAM)
+        log.debug('addrinfo: %s' % addrinfo)
+        if addrinfo:
+            (fqdn, port) = socket.getnameinfo(addrinfo[0][4],
+                                              socket.NI_NAMEREQD)
+            if fqdn:
+                log.info('Setting hostname on VM as %s' % fqdn)
+                hostname = fqdn.split('.')[0] if set_short else fqdn
+                _cloud.distro.set_hostname(hostname, fqdn=hostname)
+                return True
+    except socket.error:
+        log.warning('No hostname found for IP address %s' % ipaddr)
+    except socket.gaierror:
+        log.warning('Unable to resolve hostname for IP address %s' % ipaddr)
+    return False
