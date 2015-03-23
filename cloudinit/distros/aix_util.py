@@ -23,6 +23,7 @@ from cloudinit import util
 
 LOG = logging.getLogger(__name__)
 
+
 # Translate Linux ethernet device name ie. eth0 to AIX form ie. en0
 def translate_devname(devname):
     device = re.compile('eth[0-9]+')
@@ -30,6 +31,7 @@ def translate_devname(devname):
         return devname.replace('th', 'n')
     else:
         return devname
+
 
 # Call chdev to add route
 def add_route(network, route):
@@ -47,6 +49,7 @@ def add_route(network, route):
     if get_route(network) is None and len(cmd) > 3:
         util.subp(cmd, capture=False, rcs=[0, 1])
 
+
 # Call chdev to delete default route
 def del_route(network, route):
     # if route exists, delete it
@@ -60,6 +63,7 @@ def del_route(network, route):
 
         if len(cmd) > 3: 
             util.subp(cmd, capture=False, rcs=[0, 1])
+
 
 # Return the default route
 def get_route(network):
@@ -76,16 +80,19 @@ def get_route(network):
     else:
         return None
 
+
 # Enable the autoconf6 daemon in /etc/rc.tcpip
 def enable_autoconf6(device_name):
     cmd = ['/usr/sbin/chrctcp', '-c', 'autoconf6', '-f', "interface=" + device_name]
     util.subp(cmd, capture=False)
     start_autoconf6(device_name)
 
+
 # Disable the autoconf6 daemon in /etc/rc.tcpip
 def disable_autoconf6():
     cmd = ['/usr/sbin/chrctcp', '-d', 'autoconf6']
     util.subp(cmd, capture=False)
+
 
 # Configure the IPv6 network interfaces
 def start_autoconf6(device_name):
@@ -95,25 +102,30 @@ def start_autoconf6(device_name):
         cmd = ['/usr/sbin/autoconf6', '-i', device_name]
     util.subp(cmd, capture=False)
 
+
 # Enable the ndpd-host daemon in /etc/rc.tcpip and start the service
 def enable_ndpd_host():
     cmd = ['/usr/sbin/chrctcp', '-S', '-a', 'ndpd-host']
     util.subp(cmd, capture=False)
+
 
 # Disable the ndpd-host daemon in /etc/rc.tcpip and stop the daemon
 def disable_ndpd_host():
     cmd = ['/usr/sbin/chrctcp', '-S', '-d', 'ndpd-host']
     util.subp(cmd, capture=False)
 
+
 # Enable the dhcpcd daemon in /etc/rc.tcpip and start the service
 def enable_dhcpcd():
     cmd = ['/usr/sbin/chrctcp', '-S', '-a', 'dhcpcd']
     util.subp(cmd, capture=False)
 
+
 # Disable the dhcpcd daemon in /etc/rc.tcpip and stop the service
 def disable_dhcpcd():
     cmd = ['/usr/sbin/chrctcp', '-S', '-d', 'dhcpcd']
     util.subp(cmd, capture=False)
+
 
 #
 # Update the /etc/dhcpcd.ini file with the following from
@@ -130,6 +142,7 @@ def update_dhcp(tmpf, interface, info):
     if info.get('gateway'): util.append_file(tmpf, " option 3  %s\n" % (info.get('gateway')))
     if info.get('address'): util.append_file(tmpf, " option 50 %s\n" % (info.get('address')))
     util.append_file(tmpf, "}\n\n")
+
 
 #
 # Parse the /etc/dhcpcd.ini file and update it with network information
@@ -168,6 +181,7 @@ def config_dhcp(interface, info, create=True):
 
             util.copy(tmpf, infile)
 
+
 # Return the device using the lsdev command output
 def find_devs_with(path=None):
     """
@@ -187,6 +201,7 @@ def find_devs_with(path=None):
         if line:
             entries.append(line)
     return entries
+
 
 def mount_cb(device, callback, data=None, rw=False, mtype=None, sync=True):
     """
@@ -242,6 +257,7 @@ def mount_cb(device, callback, data=None, rw=False, mtype=None, sync=True):
                 ret = callback(mountpoint, data)
             return ret
 
+
 def mounts():
     mounted = {}
     try:
@@ -274,6 +290,7 @@ def mounts():
         print("Failed fetching mount points")
     return mounted
 
+
 @contextlib.contextmanager
 def unmounter(umount):
     try:
@@ -283,9 +300,11 @@ def unmounter(umount):
             umount_cmd = ["/usr/sbin/umount", umount]
             util.subp(umount_cmd)
 
+
 # Helper function to write the resolv.conf file
 def write_resolv_conf_file(fn, r_conf):
     util.write_file(fn, str(r_conf), 0644)
+
 
 # Helper function to write /etc/resolv.conf
 def update_resolve_conf_file(fn, dns_servers, search_servers):
@@ -311,6 +330,7 @@ def update_resolve_conf_file(fn, dns_servers, search_servers):
                 util.logexc(LOG, "Failed at adding search domain %s", s)
     write_resolv_conf_file(fn, r_conf)
 
+
 # Overwrite the existing conf file so the resolv.conf
 # is a replacement versus an update to eliminate unwanted
 # existing changes from previous capture data
@@ -318,3 +338,11 @@ def remove_resolve_conf_file(fn):
     r_conf = ResolvConf('')
     r_conf.parse()
     write_resolv_conf_file(fn, r_conf)
+
+
+def get_mask(interface):
+    (lsattr_out, _err) = util.subp(["/usr/sbin/lsattr", "-El", interface, "-a", "netmask", "-F", "value"], rcs=[0,255])
+    if not lsattr_out or lsattr_out[0] == '\n':
+        return "-"
+    else:
+        return lsattr_out.strip()

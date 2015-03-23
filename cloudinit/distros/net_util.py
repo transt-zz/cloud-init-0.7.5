@@ -137,7 +137,7 @@ def translate_network(settings):
             else:
                 iface_info['ipv4'] = False
         # These can just be copied over
-        for k in ['netmask', 'address', 'gateway', 'broadcast']:
+        for k in ['netmask', 'address', 'gateway', 'broadcast', 'mtu']:
             if k in info:
                 val = info[k].strip().lower()
                 if val:

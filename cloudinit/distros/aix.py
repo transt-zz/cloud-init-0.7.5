@@ -27,6 +27,7 @@ from cloudinit.distros.parsers.hostname import HostnameConf
 
 LOG = logging.getLogger(__name__)
 
+
 class Distro(distros.Distro):
     hostname_conf_fn = "/etc/hosts"
     resolve_conf_fn = "/etc/resolv.conf"
@@ -88,6 +89,7 @@ class Distro(distros.Distro):
                         chdev_opts = {
                             "address" : '-anetaddr6=',
                             "netmask" : '-aprefixlen=',
+                            "mtu" : '-amtu=',
                         }
                         run_cmd = 1
                         run_autoconf6 = True
@@ -101,6 +103,7 @@ class Distro(distros.Distro):
                         chdev_opts = {
                             "address" : '-anetaddr=',
                             "netmask" : '-anetmask=',
+                            "mtu" : '-amtu=',
                         }
                         run_cmd = 1
 

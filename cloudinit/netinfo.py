@@ -21,6 +21,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import cloudinit.util as util
+import cloudinit.distros.aix_util as aix_util
+import os
 import re
 
 from prettytable import PrettyTable
@@ -120,6 +122,9 @@ def route_info():
                 toks[0] == "Internet6" or toks[0] == "Routing"):
             continue
 
+        if "U" in toks[1]:
+            toks.insert(1, "-")
+
         if len(toks) < 8:
             toks.append("-")
             toks.append("-")
@@ -136,6 +141,12 @@ def route_info():
             'use': toks[6],
             'iface': toks[7],
         }
+
+        # Update the entry for aix output
+        if os.path.exists("/usr/sbin/lsattr"):
+            entry['genmask'] = aix_util.get_mask(toks[5])
+            entry['flags'] = toks[2]
+            entry['iface'] = toks[5]
 
         routes.append(entry)
     return routes

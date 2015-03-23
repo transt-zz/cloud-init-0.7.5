@@ -91,6 +91,8 @@ class Distro(distros.Distro):
                 'MACADDR': info.get('hwaddress'),
                 'ONBOOT': _make_sysconfig_bool(info.get('auto')),
             }
+            if 'mtu' in info:
+                net_cfg['MTU'] = info.get('mtu')
             # Remove the existing cfg file so the network configuration
             # is a replacement versus an update to match debian distro
             # functionality.

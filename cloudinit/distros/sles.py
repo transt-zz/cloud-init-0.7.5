@@ -134,6 +134,8 @@ class Distro(distros.Distro):
                 net_cfg['FIREWALL'] = 'no'
             if dev == 'eth0' and info.get('gateway'):
                 self._write_default_route(self.routes_fn, info.get('gateway'))
+            if 'mtu' in info:
+                net_cfg['MTU'] = info.get('mtu')
 
             # Remove the existing cfg file so the network configuration
             # is a replacement versus an update to match debian distro
