@@ -119,7 +119,7 @@ class Distro(distros.Distro):
                         except Exception as e:
                             raise e
 
-                        if info['mtu']:
+                        if 'mtu' in info:
                             util.subp(["/usr/sbin/chdev", "-l", aix_dev, "-amtu=" + info['mtu']], capture=False, rcs=[0, 1])
                             time.sleep(2)
                         if aix_dev == "en0":
