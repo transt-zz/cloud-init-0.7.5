@@ -13,8 +13,11 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
 import re
 import contextlib
+import subprocess
+import time
 
 from cloudinit.distros.parsers.resolv_conf import ResolvConf
 
@@ -46,8 +49,8 @@ def add_route(network, route):
     elif network == 'ipv6':
         cmd.extend(["-arout6=" + "net,-hopcount,0,,,::," + route])
 
-    if get_route(network) is None and len(cmd) > 3:
-        util.subp(cmd, capture=False, rcs=[0, 1])
+    util.subp(cmd, capture=False, rcs=[0, 1])
+    time.sleep(2)
 
 
 # Call chdev to delete default route
@@ -62,7 +65,8 @@ def del_route(network, route):
             cmd.append("-adelrout6=\"" + route_out + "\"")
 
         if len(cmd) > 3: 
-            util.subp(cmd, capture=False, rcs=[0, 1])
+            subprocess.call(cmd, stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
+            time.sleep(1)
 
 
 # Return the default route
@@ -73,7 +77,7 @@ def get_route(network):
     elif network == 'ipv6':
         cmd = ['/usr/sbin/lsattr', '-El', 'inet0', '-a', 'rout6', '-F', 'value']
     (out, err) = util.subp(cmd)
-
+    time.sleep(1)
     out = out.strip()
     if len(out):
         return out
@@ -341,8 +345,21 @@ def remove_resolve_conf_file(fn):
 
 
 def get_mask(interface):
-    (lsattr_out, _err) = util.subp(["/usr/sbin/lsattr", "-El", interface, "-a", "netmask", "-F", "value"], rcs=[0,255])
-    if not lsattr_out or lsattr_out[0] == '\n':
+    netmask = get_if_attr(interface, "netmask")
+    if netmask is None:
         return "-"
+    else:
+        return netmask
+
+
+#
+# Return the value of an attribute for an interface
+# The attr argument comes from the lsattr command device attribute
+#
+def get_if_attr(interface, attr):
+    (lsattr_out, _err) = util.subp(["/usr/sbin/lsattr", "-El", interface, "-a", attr, "-F", "value"], rcs=[0, 255])
+
+    if not lsattr_out or lsattr_out[0] == '\n':
+        return None
     else:
         return lsattr_out.strip()

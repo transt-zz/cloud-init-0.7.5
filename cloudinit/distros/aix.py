@@ -12,6 +12,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import time
+
 from cloudinit import distros
 from cloudinit import helpers
 from cloudinit import log as logging
@@ -89,7 +91,6 @@ class Distro(distros.Distro):
                         chdev_opts = {
                             "address" : '-anetaddr6=',
                             "netmask" : '-aprefixlen=',
-                            "mtu" : '-amtu=',
                         }
                         run_cmd = 1
                         run_autoconf6 = True
@@ -103,7 +104,6 @@ class Distro(distros.Distro):
                         chdev_opts = {
                             "address" : '-anetaddr=',
                             "netmask" : '-anetmask=',
-                            "mtu" : '-amtu=',
                         }
                         run_cmd = 1
 
@@ -111,15 +111,17 @@ class Distro(distros.Distro):
                         if key in chdev_opts and val and isinstance(val, basestring):
                             chdev_cmd.append(chdev_opts[key] + val)
                             log_chdev_cmd.append(chdev_opts[key] + val)
-                    chdev_cmd.append("-astate=down")
-                    log_chdev_cmd.append("-astate=down")
 
                     if run_cmd:
                         try:
                             util.subp(chdev_cmd, logstring=log_chdev_cmd)
+                            time.sleep(2)
                         except Exception as e:
                             raise e
 
+                        if info['mtu']:
+                            util.subp(["/usr/sbin/chdev", "-l", aix_dev, "-amtu=" + info['mtu']], capture=False, rcs=[0, 1])
+                            time.sleep(2)
                         if aix_dev == "en0":
                             if info['ipv6'] == True:
                                 aix_util.add_route("ipv6", info.get('gateway'))
@@ -178,6 +180,7 @@ class Distro(distros.Distro):
         LOG.debug("Attempting to run bring up interface %s using command %s", device_name, cmd)
         try:
             (_out, err) = util.subp(cmd)
+            time.sleep(1)
             if len(err):
                 LOG.warn("Running %s resulted in stderr output: %s", cmd, err)
             return True
@@ -197,16 +200,22 @@ class Distro(distros.Distro):
         if device_name in 'lo':
             return True
 
-        cmd = ['/usr/sbin/chdev', '-l', aix_util.translate_devname(device_name), '-a', 'state=down']
-        LOG.debug("Attempting to run bring down interface %s using command %s", device_name, cmd)
-        try:
-            (_out, err) = util.subp(cmd)
-            if len(err):
-                LOG.warn("Running %s resulted in stderr output: %s", cmd, err)
+        interface = aix_util.translate_devname(device_name)
+        if aix_util.get_if_attr(interface, "state") == "down":
+            time.sleep(1)
             return True
-        except util.ProcessExecutionError:
-            util.logexc(LOG, "Running interface command %s failed", cmd)
-            return False
+        else:
+            cmd = ['/usr/sbin/chdev', '-l', interface, '-a', 'state=down']
+            LOG.debug("Attempting to run bring down interface %s using command %s", device_name, cmd)
+            try:
+                (_out, err) = util.subp(cmd, rcs=[0, 1])
+                time.sleep(1)
+                if len(err):
+                    LOG.warn("Running %s resulted in stderr output: %s", cmd, err)
+                return True
+            except util.ProcessExecutionError:
+                util.logexc(LOG, "Running interface command %s failed", cmd)
+                return False
 
     def _bring_down_interfaces(self, device_names):
         if device_names and 'all' in device_names:
