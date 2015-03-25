@@ -127,6 +127,9 @@ else
 	/usr/sbin/chdev -l sys0 -a ghostdev=1 2>&1 >/dev/null
 fi
 
+%preun
+rm -rf /opt/freeware/var/lib/cloud/*
+
 %postun
 rm /etc/rc.d/rc2.d/S01cloud-init-local
 rm /etc/rc.d/rc2.d/S02cloud-init
