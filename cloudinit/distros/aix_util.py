@@ -142,9 +142,15 @@ def disable_dhcpcd():
 def update_dhcp(tmpf, interface, info):
     util.append_file(tmpf, "interface %s\n" % interface)
     util.append_file(tmpf, "{\n")
-    if info.get('netmask'): util.append_file(tmpf, " option 1  %s\n" % (info.get('netmask')))
-    if info.get('gateway'): util.append_file(tmpf, " option 3  %s\n" % (info.get('gateway')))
-    if info.get('address'): util.append_file(tmpf, " option 50 %s\n" % (info.get('address')))
+    if info.get('netmask'):
+        util.append_file(tmpf, " option 1  %s\n" % (info.get('netmask')))
+    if interface == "en0":
+        if info.get('gateway'):
+            util.append_file(tmpf, " option 3  %s\n" % (info.get('gateway')))
+    else:
+        util.append_file(tmpf, " reject 3\n")         
+    if info.get('address'):
+        util.append_file(tmpf, " option 50 %s\n" % (info.get('address')))
     util.append_file(tmpf, "}\n\n")
 
 
