@@ -23,7 +23,7 @@ cloud-init-0.7.5
     - chmod -Rf +x /tmp/CLOUD-INIT/cloud-init-0.7.5/bin
     
 5.  Copy the spec file from cloud-init to the RPM build packages path
-    - cp /tmp/CLOUD-INIT/cloud-init-0.7.5/packages/aix/cloud-init.spec /opt/freeware/src/packages/SPECS/cloud-init.spec
+    - cp /tmp/CLOUD-INIT/cloud-init-0.7.5/packages/aix/cloud-init.spec.in /opt/freeware/src/packages/SPECS/cloud-init.spec
     
 6.  tar and gzip the cloudinit file so that RPM can build it
     - tar -cvf cloud-init-0.7.5.tar cloud-init-0.7.5
@@ -33,7 +33,7 @@ cloud-init-0.7.5
     - cp cloud-init-0.7.5.tar.gz /opt/freeware/src/packages/SOURCES/cloud-init-0.7.5.tar.gz
     
 8.  Build the cloudinit RPM
-    - rpm -v -bb /opt/freeware/src/packages/SPEC/cloud-init.spec
+    - rpm -v -bb /opt/freeware/src/packages/SPECS/cloud-init.spec
     
 9.  Install the cloud-init RPM package.
     - rpm -ivh /opt/freeware/src/packages/RPMS/ppc/cloud-init-0.7.5-4.1.aix6.1.ppc.rpm
@@ -88,6 +88,7 @@ The RPM packages can be obtained from the following website:
 - [libyaml-0.1.4-1.aix6.1.ppc.rpm][30]
 - [python-PyYAML-3.11-2.aix6.1.ppc.rpm][31]
 - [python-six-1.3.0-1.aix6.1.noarch.rpm][32]
+- [python-setuptools-0.9.8-2.aix6.1.noarch.rpm][33]
 
 [1]:http://www.bullfreeware.com/
 [2]:http://www.bullfreeware.com/download/bin/1439/bzip2-1.0.6-2.aix6.1.ppc.rpm
@@ -121,3 +122,4 @@ The RPM packages can be obtained from the following website:
 [30]:http://www.bullfreeware.com/download/bin/1632/libyaml-0.1.4-1.aix6.1.ppc.rpm
 [31]:http://www.bullfreeware.com/download/bin/2192/python-PyYAML-3.11-2.aix6.1.ppc.rpm
 [32]:http://www.bullfreeware.com/download/bin/1903/python-six-1.3.0-1.aix6.1.noarch.rpm
+[33]:http://www.bullfreeware.com/download/bin/2115/python-setuptools-0.9.8-2.aix6.1.noarch.rpm
