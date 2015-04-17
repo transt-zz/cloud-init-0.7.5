@@ -70,25 +70,26 @@ The RPM packages can be obtained from the following website:
 - [ncurses-5.9-3.aix6.1.ppc.rpm][15]
 - [sqlite-3.7.15.2-2.aix6.1.ppc.rpm][16]
 - [python-2.7.6-1.aix6.1.ppc.rpm][17]
+- [fdupes-1.51-1.aix5.1.ppc.rpm][18]
 
 #### Packages needed for installing cloud-init on AIX ####
 
-- [python-devel-2.7.6-1.aix6.1.ppc.rpm][18]
-- [python-xml-0.8.4-1.aix6.1.ppc.rpm][19]
-- [python-boto-2.34.0-1.aix6.1.noarch.rpm][20]
-- [python-argparse-1.2.1-1.aix6.1.noarch.rpm][21]
-- [python-cheetah-2.4.4-2.aix6.1.ppc.rpm][22]
-- [python-configobj-5.0.5-1.aix6.1.noarch.rpm][23]
-- [python-jsonpointer-1.0.c1ec3df-1.aix6.1.noarch.rpm][24]
-- [python-jsonpatch-1.8-1.aix6.1.noarch.rpm][25]
-- [python-oath-1.0.1-1.aix6.1.noarch.rpm][26]
-- [python-pyserial-2.7-1.aix6.1.ppc.rpm][27]
-- [python-prettytable-0.7.2-1.aix6.1.noarch.rpm][28]
-- [python-requests-2.4.3-1.aix6.1.noarch.rpm][29]
-- [libyaml-0.1.4-1.aix6.1.ppc.rpm][30]
-- [python-PyYAML-3.11-2.aix6.1.ppc.rpm][31]
-- [python-six-1.3.0-1.aix6.1.noarch.rpm][32]
-- [python-setuptools-0.9.8-2.aix6.1.noarch.rpm][33]
+- [python-devel-2.7.6-1.aix6.1.ppc.rpm][19]
+- [python-xml-0.8.4-1.aix6.1.ppc.rpm][20]
+- [python-boto-2.34.0-1.aix6.1.noarch.rpm][21]
+- [python-argparse-1.2.1-1.aix6.1.noarch.rpm][22]
+- [python-cheetah-2.4.4-2.aix6.1.ppc.rpm][23]
+- [python-configobj-5.0.5-1.aix6.1.noarch.rpm][24]
+- [python-jsonpointer-1.0.c1ec3df-1.aix6.1.noarch.rpm][25]
+- [python-jsonpatch-1.8-1.aix6.1.noarch.rpm][26]
+- [python-oath-1.0.1-1.aix6.1.noarch.rpm][27]
+- [python-pyserial-2.7-1.aix6.1.ppc.rpm][28]
+- [python-prettytable-0.7.2-1.aix6.1.noarch.rpm][29]
+- [python-requests-2.4.3-1.aix6.1.noarch.rpm][30]
+- [libyaml-0.1.4-1.aix6.1.ppc.rpm][31]
+- [python-PyYAML-3.11-2.aix6.1.ppc.rpm][32]
+- [python-six-1.3.0-1.aix6.1.noarch.rpm][33]
+- [python-setuptools-0.9.8-2.aix6.1.noarch.rpm][34]
 
 [1]:http://www.bullfreeware.com/
 [2]:http://www.bullfreeware.com/download/bin/1439/bzip2-1.0.6-2.aix6.1.ppc.rpm
@@ -107,19 +108,20 @@ The RPM packages can be obtained from the following website:
 [15]:http://www.bullfreeware.com/download/bin/1486/ncurses-5.9-3.aix6.1.ppc.rpm
 [16]:http://www.bullfreeware.com/download/bin/1742/sqlite-3.7.15.2-2.aix6.1.ppc.rpm
 [17]:http://www.bullfreeware.com/download/bin/2064/python-2.7.6-1.aix6.1.ppc.rpm
-[18]:http://www.bullfreeware.com/download/bin/2065/python-devel-2.7.6-1.aix6.1.ppc.rpm
-[19]:http://www.bullfreeware.com/download/bin/2117/python-xml-0.8.4-1.aix6.1.ppc.rpm
-[20]:http://www.bullfreeware.com/download/bin/2101/python-boto-2.34.0-1.aix6.1.noarch.rpm
-[21]:http://www.bullfreeware.com/download/bin/2099/python-argparse-1.2.1-1.aix6.1.noarch.rpm
-[22]:http://www.bullfreeware.com/download/bin/2102/python-cheetah-2.4.4-2.aix6.1.ppc.rpm
-[23]:http://www.bullfreeware.com/download/bin/2103/python-configobj-5.0.5-1.aix6.1.noarch.rpm
-[24]:http://www.bullfreeware.com/download/bin/2106/python-jsonpointer-1.0.c1ec3df-1.aix6.1.noarch.rpm
-[25]:http://www.bullfreeware.com/download/bin/2105/python-jsonpatch-1.8-1.aix6.1.noarch.rpm
-[26]:http://www.bullfreeware.com/download/bin/2108/python-oauth-1.0.1-1.aix6.1.noarch.rpm
-[27]:http://www.bullfreeware.com/download/bin/2112/python-pyserial-2.7-1.aix6.1.ppc.rpm
-[28]:http://www.bullfreeware.com/download/bin/1858/python-prettytable-0.7.2-1.aix6.1.noarch.rpm
-[29]:http://www.bullfreeware.com/download/bin/2114/python-requests-2.4.3-1.aix6.1.noarch.rpm
-[30]:http://www.bullfreeware.com/download/bin/1632/libyaml-0.1.4-1.aix6.1.ppc.rpm
-[31]:http://www.bullfreeware.com/download/bin/2192/python-PyYAML-3.11-2.aix6.1.ppc.rpm
-[32]:http://www.bullfreeware.com/download/bin/1903/python-six-1.3.0-1.aix6.1.noarch.rpm
-[33]:http://www.bullfreeware.com/download/bin/2115/python-setuptools-0.9.8-2.aix6.1.noarch.rpm
+[18]:http://www.oss4aix.org/download/RPMS/fdupes/fdupes-1.51-1.aix5.1.ppc.rpm
+[19]:http://www.bullfreeware.com/download/bin/2065/python-devel-2.7.6-1.aix6.1.ppc.rpm
+[20]:http://www.bullfreeware.com/download/bin/2117/python-xml-0.8.4-1.aix6.1.ppc.rpm
+[21]:http://www.bullfreeware.com/download/bin/2101/python-boto-2.34.0-1.aix6.1.noarch.rpm
+[22]:http://www.bullfreeware.com/download/bin/2099/python-argparse-1.2.1-1.aix6.1.noarch.rpm
+[23]:http://www.bullfreeware.com/download/bin/2102/python-cheetah-2.4.4-2.aix6.1.ppc.rpm
+[24]:http://www.bullfreeware.com/download/bin/2103/python-configobj-5.0.5-1.aix6.1.noarch.rpm
+[25]:http://www.bullfreeware.com/download/bin/2106/python-jsonpointer-1.0.c1ec3df-1.aix6.1.noarch.rpm
+[26]:http://www.bullfreeware.com/download/bin/2105/python-jsonpatch-1.8-1.aix6.1.noarch.rpm
+[27]:http://www.bullfreeware.com/download/bin/2108/python-oauth-1.0.1-1.aix6.1.noarch.rpm
+[28]:http://www.bullfreeware.com/download/bin/2112/python-pyserial-2.7-1.aix6.1.ppc.rpm
+[29]:http://www.bullfreeware.com/download/bin/1858/python-prettytable-0.7.2-1.aix6.1.noarch.rpm
+[30]:http://www.bullfreeware.com/download/bin/2114/python-requests-2.4.3-1.aix6.1.noarch.rpm
+[31]:http://www.bullfreeware.com/download/bin/1632/libyaml-0.1.4-1.aix6.1.ppc.rpm
+[32]:http://www.bullfreeware.com/download/bin/2192/python-PyYAML-3.11-2.aix6.1.ppc.rpm
+[33]:http://www.bullfreeware.com/download/bin/1903/python-six-1.3.0-1.aix6.1.noarch.rpm
+[34]:http://www.bullfreeware.com/download/bin/2115/python-setuptools-0.9.8-2.aix6.1.noarch.rpm
