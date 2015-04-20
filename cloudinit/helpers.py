@@ -328,13 +328,13 @@ class Paths(object):
     def __init__(self, path_cfgs, ds=None):
         self.cfgs = path_cfgs
         # Populate all the initial paths
-        self.cloud_dir = path_cfgs.get('cloud_dir', '/var/lib/cloud')
+        self.cloud_dir = path_cfgs.get('cloud_dir', '/opt/freeware/var/lib/cloud')
         self.instance_link = os.path.join(self.cloud_dir, 'instance')
         self.boot_finished = os.path.join(self.instance_link, "boot-finished")
         self.upstart_conf_d = path_cfgs.get('upstart_dir')
         self.seed_dir = os.path.join(self.cloud_dir, 'seed')
         # This one isn't joined, since it should just be read-only
-        template_dir = path_cfgs.get('templates_dir', '/etc/cloud/templates/')
+        template_dir = path_cfgs.get('templates_dir', '/opt/freeware/etc/cloud/templates/')
         self.template_tpl = os.path.join(template_dir, '%s.tmpl')
         self.lookups = {
            "handlers": "handlers",
