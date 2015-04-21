@@ -298,8 +298,6 @@ class Distro(distros.Distro):
             log_adduser_cmd.append('-d/nonexistent')
         else:
             adduser_cmd.append('-m')
-            adduser_cmd.append('-m')
-            log_adduser_cmd.append('-m')
             log_adduser_cmd.append('-m')
 
         adduser_cmd.append(name)
