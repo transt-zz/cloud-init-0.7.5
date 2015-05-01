@@ -28,6 +28,7 @@ import time
 frequency = PER_INSTANCE
 
 EXIT_FAIL = 254
+AIX = 0
 
 
 def givecmdline(pid):
@@ -42,6 +43,9 @@ def givecmdline(pid):
             line = output.splitlines()[1]
             m = re.search('\d+ (\w|\.|-)+\s+(/\w.+)', line)
             return m.group(2)
+        elif AIX:
+            (ps_out, _err) = util.subp(["/usr/bin/ps", "-p", str(pid), "-oargs="], rcs=[0, 1])
+            return ps_out.strip()
         else:
             return util.load_file("/proc/%s/cmdline" % pid)
     except IOError:
@@ -49,6 +53,10 @@ def givecmdline(pid):
 
 
 def handle(_name, cfg, _cloud, log, _args):
+
+    if _cloud.distro.name == "aix":
+        global AIX
+        AIX = 1
 
     try:
         (args, timeout) = load_power_state(cfg)
@@ -85,7 +93,10 @@ def load_power_state(cfg):
     if not isinstance(pstate, dict):
         raise TypeError("power_state is not a dict.")
 
-    opt_map = {'halt': '-H', 'poweroff': '-P', 'reboot': '-r'}
+    if AIX:
+        opt_map = {'halt': '-h', 'poweroff': '-p', 'reboot': '-r'}
+    else:
+        opt_map = {'halt': '-H', 'poweroff': '-P', 'reboot': '-r'}
 
     mode = pstate.get("mode")
     if mode not in opt_map:

@@ -436,7 +436,7 @@ def atomic_write_json(path, data):
 
 def status_wrapper(name, args, data_d=None, link_d=None):
     if data_d is None:
-        data_d = os.path.normpath("/var/lib/cloud/data")
+        data_d = os.path.normpath("/opt/freeware/var/lib/cloud/data")
     if link_d is None:
         link_d = os.path.normpath("/run/cloud-init")
 

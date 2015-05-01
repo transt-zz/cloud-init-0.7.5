@@ -646,8 +646,8 @@ def fetch_ssl_details(paths=None):
     ssl_details = {}
     # Lookup in these locations for ssl key/cert files
     ssl_cert_paths = [
-        '/var/lib/cloud/data/ssl',
-        '/var/lib/cloud/instance/data/ssl',
+        '/opt/freeware/var/lib/cloud/data/ssl',
+        '/opt/freeware/var/lib/cloud/instance/data/ssl',
     ]
     if paths:
         ssl_cert_paths.extend([

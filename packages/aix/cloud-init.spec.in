@@ -151,6 +151,7 @@ fi
 
 %preun
 rm -rf /opt/freeware/var/lib/cloud/*
+rm -rf /run/cloud-init
 
 %postun
 rm /etc/rc.d/rc2.d/S01cloud-init-local
