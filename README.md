@@ -70,7 +70,7 @@ The RPM packages can be obtained from the following website:
 - [ncurses-5.9-3.aix6.1.ppc.rpm][15]
 - [sqlite-3.7.15.2-2.aix6.1.ppc.rpm][16]
 - [python-2.7.6-1.aix6.1.ppc.rpm][17]
-- [fdupes-1.51-1.aix5.1.ppc.rpm][18]
+- [fdupes-1.51-1.aix6.1.ppc.rpm][18]
 
 #### Packages needed for installing cloud-init on AIX ####
 
@@ -108,7 +108,7 @@ The RPM packages can be obtained from the following website:
 [15]:http://www.bullfreeware.com/download/bin/1486/ncurses-5.9-3.aix6.1.ppc.rpm
 [16]:http://www.bullfreeware.com/download/bin/1742/sqlite-3.7.15.2-2.aix6.1.ppc.rpm
 [17]:http://www.bullfreeware.com/download/bin/2064/python-2.7.6-1.aix6.1.ppc.rpm
-[18]:http://www.oss4aix.org/download/RPMS/fdupes/fdupes-1.51-1.aix5.1.ppc.rpm
+[18]:http://www.bullfreeware.com/download/bin/2332/fdupes-1.51-1.aix6.1.ppc.rpm
 [19]:http://www.bullfreeware.com/download/bin/2065/python-devel-2.7.6-1.aix6.1.ppc.rpm
 [20]:http://www.bullfreeware.com/download/bin/2117/python-xml-0.8.4-1.aix6.1.ppc.rpm
 [21]:http://www.bullfreeware.com/download/bin/2101/python-boto-2.34.0-1.aix6.1.noarch.rpm
