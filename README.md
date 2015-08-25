@@ -125,3 +125,12 @@ The RPM packages can be obtained from the following website:
 [32]:http://www.bullfreeware.com/download/bin/2192/python-PyYAML-3.11-2.aix6.1.ppc.rpm
 [33]:http://www.bullfreeware.com/download/bin/1903/python-six-1.3.0-1.aix6.1.noarch.rpm
 [34]:http://www.bullfreeware.com/download/bin/2115/python-setuptools-0.9.8-2.aix6.1.noarch.rpm
+
+#### AIX Cloudinit cloudinst.sh script ####
+>The cloudinst.sh script is provided to facilitate the installation of Cloudinit and its requisites on AIX.  When executed without argument, the query operation will run to determine the package size needed for the installation.  This size can then be used to expand the /opt filesystem on the system to accomodate the installation of cloud-init and its requisites.  Please make sure that machine installing cloud-init must be firewall authenticated to download the RPM packages from http://www.bullfreeware.com.
+
+    # usage: cloudinst.sh [ -o { query | install | remove } | -h ]
+        -o query        query the size of the cloudinit RPM package and its requisites
+        -o install      install the cloudinit RPM package and its requisites
+        -o remove       remove the cloudinit RPM package and its requisites
+        -h              print usage
