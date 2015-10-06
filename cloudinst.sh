@@ -1,8 +1,8 @@
 #!/usr/bin/ksh
 # File Desciption : IBM script to install/remove/query cloudinit and
 #                   its requisites
-# Script Version : 1.1
-# Date :   05/12/2015
+# Script Version : 1.2
+# Date :   10/05/2015
 # Author : Scott Tran
 # Description :  This script performs 3 main operations.  They are:
 #      - Query the size of the cloudinit package and its requisites
@@ -22,6 +22,7 @@
 # Version History:
 #      1.0    Initial version
 #      1.1    Change fdupes location at line 60
+#      1.2    Change rpm flag to "-Uvh" from "-ivh" for install
 ######################################################################
 
 ######################################################################
@@ -150,9 +151,9 @@ function install_rpm {
 
                         # Special flag for gettext
                         if [[ $rpm_name = gettext* ]]; then
-                                $RPM -ivh --nodeps $index
+                                $RPM -Uvh --nodeps $index
                         else
-                                $RPM -ivh $index
+                                $RPM -Uvh $index
                         fi
 
                         if [[ $? -ne 0 ]]; then
