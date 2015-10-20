@@ -44,10 +44,11 @@ def add_route(network, route):
     # Add the route if there isn't already a default route
     cmd = ['/usr/sbin/chdev', '-l', 'inet0']
 
-    if network == 'ipv4':
-        cmd.extend(["-aroute=" + "net,-hopcount,0,,0," + route])
-    elif network == 'ipv6':
-        cmd.extend(["-arout6=" + "net,-hopcount,0,,,::," + route])
+    if route:
+        if network == 'ipv4':
+            cmd.extend(["-aroute=" + "net,-hopcount,0,,0," + route])
+        elif network == 'ipv6':
+            cmd.extend(["-arout6=" + "net,-hopcount,0,,,::," + route])
 
     util.subp(cmd, capture=False, rcs=[0, 1])
     time.sleep(2)
